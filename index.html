@@ -175,7 +175,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
 ];
  const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
  const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
- let index=0, rate=1, queue=[], queuePos=0, isReading=false;
+ let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0;
  function renderSections(){
   data.forEach((item,i)=>{
    const card=document.createElement('article');card.className='section';card.id='section-'+i;
@@ -193,14 +193,36 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
   const pct=Math.round(((index+(isReading?0.5:0))/data.length)*100);
   progress.value=Math.min(100,pct);progressLabel.textContent=Math.min(100,pct)+'%';
  }
+ function prepareSpeech(str){
+  return str.replace(/^\d+\.\s*/, '')
+   .replace(/%0,01[–-]0,1/g,'yüzde sıfır virgül sıfır bir ile yüzde sıfır virgül bir arasında')
+   .replace(/%5[–-]10/g,'yüzde beş ile yüzde on arasında')
+   .replace(/%0,01/g,'yüzde sıfır virgül sıfır bir')
+   .replace(/4[–-]6/g,'dört ile altı')
+   .replace(/\bMR\b/g,'emar').replace(/\bBT\b/g,'bilgisayarlı tomografi')
+   .replace(/X-ışınları/g,'iks ışınları').replace(/vb\./g,'ve benzeri')
+   .replace(/\(([^)]*)\)/g,', $1,').replace(/\s*\/\s*/g,' veya ');
+ }
  function speakText(str,onend){
-  if(!('speechSynthesis' in window)){text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
-  const spokenText=str.replace(/\bMR\b/g,'emar').replace(/\bBT\b/g,'bilgisayarlı tomografi');
-  const u=new SpeechSynthesisUtterance(spokenText);u.lang='tr-TR';u.rate=rate;
-  u.onstart=()=>{isReading=true;updateCurrent(index)};
-  u.onend=()=>{if(onend)onend()};
-  u.onerror=()=>{isReading=false};
-  window.speechSynthesis.speak(u);
+  if(!('speechSynthesis' in window)){isReading=false;text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
+  const session=speechSession;
+  const chunks=prepareSpeech(str).match(/[^.!?\n]+[.!?]?/g)||[];
+  let position=0;
+  function speakNext(){
+   if(session!==speechSession)return;
+   if(position>=chunks.length){if(onend)onend();return}
+   const u=new SpeechSynthesisUtterance(chunks[position++].trim());
+   u.lang='tr-TR';u.rate=rate;
+   const voices=window.speechSynthesis.getVoices();
+   const turkish=voices.filter(v=>/^tr(?:-|_)/i.test(v.lang)||v.lang.toLowerCase()==='tr');
+   const voice=turkish.find(v=>v.default)||turkish[0];
+   if(voice)u.voice=voice;
+   u.onstart=()=>{if(session===speechSession){isReading=true;updateCurrent(index)}};
+   u.onend=speakNext;
+   u.onerror=(event)=>{if(session!==speechSession)return;isReading=false;if(event.error!=='canceled'&&event.error!=='interrupted')text.textContent='Sesli okuma tamamlanamadı. Bölümü tekrar başlatmayı deneyin.'};
+   window.speechSynthesis.speak(u);
+  }
+  speakNext();
  }
  function readOne(i){stopAll();updateCurrent(i);isReading=true;speakText(data[i].title+'. '+data[i].text,()=>{isReading=false;progress.value=Math.round(((i+1)/data.length)*100);progressLabel.textContent=progress.value+'%';text.textContent='Bu bölümün okuması tamamlandı.'})}
  function readAll(start=0){stopAll();queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
@@ -209,7 +231,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
   const originalIndex=data.length-queue.length+queuePos;updateCurrent(originalIndex);
   speakText(queue[queuePos].title+'. '+queue[queuePos].text,()=>{queuePos++;playNext()});
  }
- function stopAll(){if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
+ function stopAll(){speechSession++;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
  document.getElementById('play').addEventListener('click',()=>readAll(0));
  document.getElementById('stop').addEventListener('click',()=>{stopAll();text.textContent='Okuma durduruldu.'});
  document.getElementById('pause').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
