@@ -3,7 +3,7 @@
  let clips={},audio=null,session=0;
  const status=message=>{const el=document.getElementById('natural-status');if(el)el.textContent=message};
  window.addEventListener('DOMContentLoaded',async()=>{
-  try{const r=await fetch('audio/manifest.json?v=3');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular yapay zekâ ile oluşturulan doğal sesle okunur. Kişisel cevaplar cihaz sesiyle geri okunur.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
+  try{const r=await fetch('audio/manifest.json?v=3');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Kişisel cevaplar cihaz sesiyle geri okunur.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
  });
  function stop(){session++;if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}}
  window.onamNatural={
