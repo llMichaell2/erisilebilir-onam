@@ -43,3 +43,13 @@ for(const action of ['stop','typing','hidden','optout','timeout']){
 console.log('PASS: stop, typing, hidden tab, opt-out, timeout, stale callbacks, manual mode and permission failure');
 
 {const h=setup();h.start();h.done();for(let i=0;i<3;i++){h.mic.onend();h.tick(300)}assert.equal(h.starts,3);assert.match(h.el("qa-status").textContent,/sona erdi/);console.log("PASS: session restart limit")}
+{
+ const h=setup();h.start();h.done();
+ for(const value of ['Test Hasta','10000000146','15.06.1990','05381234567','evet']){h.result(value);h.done();h.result('doğru');h.done()}
+ assert.match(h.el('qa-question').textContent,/Son beyan/);
+ h.result('evet');assert.equal(h.el('qa-confirm').hidden,true);h.done();
+ h.result('Onam formunu okudum anladım onaylıyorum');assert.equal(h.el('qa-confirm').hidden,false);h.done();
+ h.result('evet');assert.equal(h.el('qa-result').hidden,true);assert.match(h.el('qa-question').textContent,/Son beyan/);
+ h.el('qa-reset').onclick();console.log('PASS: all six questions, suggested date by voice and exact final declaration safeguards');
+}
+
