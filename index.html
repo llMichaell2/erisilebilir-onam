@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f8fc">
+<title>Onam Formu – Sesli Okuyucu</title>
+<style>
+:root{
+  --bg:#f2f7f7;--card:#ffffff;--ink:#142d3a;--muted:#405966;
+  --teal:#075e63;--teal-dark:#06474c;--mint:#dff5ef;--line:#c9dcdd;
+  --focus:#ffbf47;--shadow:0 12px 32px rgba(12,55,63,.08)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:linear-gradient(180deg,#eaf5f3 0,#f5f8fa 360px,var(--bg) 100%);
+  color:var(--ink);font:18px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif
+}
+main{max-width:980px;margin:0 auto;padding:28px 16px 52px}
+header,.panel{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px;margin-bottom:20px;box-shadow:var(--shadow)
+}
+header{
+  position:relative;overflow:hidden;border:0;color:#fff;
+  background:linear-gradient(135deg,#06474c 0%,#08777a 58%,#13958b 100%);
+  padding:clamp(24px,5vw,42px)
+}
+header:after{
+  content:"";position:absolute;width:250px;height:250px;border:1px solid rgba(255,255,255,.18);
+  border-radius:50%;right:-90px;top:-110px;box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.035);
+  pointer-events:none
+}
+header>*{position:relative;z-index:1}
+.eyebrow{
+  display:inline-block;font-size:.9rem;font-weight:800;letter-spacing:.04em;
+  color:#e0fffa;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);
+  border-radius:999px;padding:6px 12px;margin:0 0 16px
+}
+h1{font-size:clamp(1.85rem,5vw,3rem);line-height:1.12;letter-spacing:-.035em;margin:0 0 12px;max-width:680px}
+header>p:not(.eyebrow){max-width:650px;color:#effffb;margin:0 0 12px}
+h2{font-size:1.35rem;line-height:1.3;margin:0 0 8px;letter-spacing:-.015em}
+p{margin:8px 0 14px}
+.muted{color:var(--muted);font-size:1rem}
+.progress-row{display:flex;justify-content:space-between;gap:12px;font-weight:800;margin-top:24px}
+progress{display:block;width:100%;height:14px;margin:9px 0 0;accent-color:#b9fff0;border-radius:99px;overflow:hidden}
+progress::-webkit-progress-bar{background:rgba(255,255,255,.22);border-radius:99px}
+progress::-webkit-progress-value{background:#b9fff0;border-radius:99px}
+progress::-moz-progress-bar{background:#b9fff0;border-radius:99px}
+.now{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);border-radius:18px;padding:16px 18px;margin-top:18px}
+#currentTitle{font-weight:850;margin-bottom:5px;color:#d7fff6}
+#currentText{font-size:1.05rem;color:#fff}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+button{
+  font:inherit;font-weight:800;min-height:58px;border:2px solid transparent;border-radius:15px;
+  padding:12px 15px;cursor:pointer;transition:transform .15s ease,background-color .15s ease,border-color .15s ease
+}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--focus);outline-offset:3px}
+.primary{background:#e0fff6;color:#06474c;border-color:#e0fff6}
+.primary:hover{background:#fff;border-color:#fff}
+.secondary{background:var(--mint);color:#06474c;border-color:#b7e4dc}
+.secondary:hover{background:#c9f0e7;border-color:#8ed7ca}
+.plain{background:#fff;border-color:var(--line);color:var(--ink)}
+.panel h2:before{content:"";display:inline-block;width:5px;height:1.05em;background:#0b8580;border-radius:8px;margin-right:10px;vertical-align:-.12em}
+.speed-list{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.speed{min-width:78px;min-height:52px}
+.speed[aria-pressed="true"]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.sections{display:grid;gap:12px;margin-top:16px}
+.section{border:1px solid var(--line);border-radius:17px;padding:18px;background:#fbfdfd;transition:border-color .15s ease,background .15s ease}
+.section h3{font-size:1.08rem;line-height:1.35;margin:0 0 7px;color:#123d47}
+.section p{margin:0 0 13px;color:#2c4651}
+.section-actions{display:flex;flex-wrap:wrap;gap:8px}
+.section-actions button{min-height:48px;font-size:1rem}
+.section.is-active{border:3px solid var(--teal);background:#eaf8f5;padding:16px;box-shadow:0 5px 18px rgba(7,94,99,.09)}
+.notice{font-size:.96rem;color:#304b56;background:#f0f7f7;border-left:4px solid #0b8580;border-radius:0 12px 12px 0;padding:14px 16px}
+@media(max-width:600px){
+  main{padding:12px 10px 30px}
+  .panel,header{padding:19px;border-radius:19px;margin-bottom:14px}
+  .controls{grid-template-columns:1fr}
+  .speed{flex:1;min-width:70px}
+  body{font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button{transition:none}button:hover{transform:none}}
+@media(prefers-contrast:more){
+  :root{--line:#52666b;--muted:#1c3037;--bg:#fff}
+  .panel,header{border:2px solid #142d3a}
+  .secondary,.plain,.section{border-width:2px}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="eyebrow">♿ Erişilebilir Sağlık Hizmeti</p>
+  <h1>🔊 Onam Formu Sesli Okuyucu</h1>
+  <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için sesli okuma prototipi.</p>
+  <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
+  <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
+  <div class="now" aria-live="polite" aria-atomic="true">
+    <div id="currentTitle">Şu an okunan</div>
+    <div id="currentText">Başlamak için “Tümünü Oku” düğmesine basın.</div>
+  </div>
+  <div class="controls">
+    <button class="secondary" id="previous" aria-label="Önceki bölüm">◀ Önceki</button>
+    <button class="primary" id="play">▶ Tümünü Oku</button>
+    <button class="secondary" id="stop">⏹ Durdur</button>
+  </div>
+  <div class="controls">
+    <button class="secondary" id="pause">⏸ Duraklat</button>
+    <button class="secondary" id="resume">▶ Devam Et</button>
+    <button class="secondary" id="next">Sonraki ▶</button>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>Okuma hızı</h2>
+  <p class="muted">Size uygun hızı seçin. Varsayılan hız 1× değeridir.</p>
+  <div class="speed-list" role="group" aria-label="Okuma hızı">
+    <button class="plain speed" data-rate="0.5" aria-pressed="false">0.5×</button>
+    <button class="plain speed" data-rate="0.75" aria-pressed="false">0.75×</button>
+    <button class="plain speed" data-rate="1" aria-pressed="true">1×</button>
+    <button class="plain speed" data-rate="1.3" aria-pressed="false">1.3×</button>
+    <button class="plain speed" data-rate="1.8" aria-pressed="false">1.8×</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>📋 Form bölümleri</h2>
+  <p class="muted">Bir bölümü seçerek yalnızca o kısmı dinleyebilirsiniz. Aşağıdaki metinler örnektir; resmî onam metni değildir.</p>
+  <div class="sections" id="sections"></div>
+</section>
+
+<section class="panel">
+  <h2>Önemli bilgi</h2>
+  <p class="notice">Bu çalışma bir prototiptir. Buradaki örnek içerik klinik onam metni olarak kullanılmamalıdır. Gerçek kullanım öncesinde sağlık kuruluşunun onayladığı metin eklenmeli, erişilebilirlik ve gizlilik gereklilikleri uzmanlarca değerlendirilmelidir. Bu sayfa hasta bilgisi toplamaz veya kaydetmez.</p>
+</section>
+</main>
+<script>
+(() => {
+ const data = [
+  {title:"1. Hasta bilgileri", text:"Bu bölüm, hastanın kimlik ve iletişim bilgileri için ayrılmıştır. Bu prototipte gerçek kişisel bilgi istenmemektedir."},
+  {title:"2. İşlemin amacı ve niteliği", text:"Bu bölümde yapılması planlanan işlem, neden önerildiği ve genel olarak nasıl uygulanacağı açıklanmalıdır. Kurum tarafından onaylanmış işlem açıklaması buraya eklenmelidir."},
+  {title:"3. Beklenen yararlar", text:"Bu bölümde işlemin beklenen yararları sade ve anlaşılır bir dille açıklanmalıdır. İçerik, ilgili sağlık kuruluşunun onaylı formundan alınmalıdır."},
+  {title:"4. Olası riskler ve yan etkiler", text:"Bu bölümde işlemle ilişkili önemli riskler, olası yan etkiler ve komplikasyonlar eksiksiz şekilde açıklanmalıdır. Örnek metin gerçek kullanım için yeterli değildir."},
+  {title:"5. Alternatifler ve işlemi reddetme", text:"Bu bölümde varsa alternatif yöntemler, işlemi yaptırmamanın olası sonuçları ve hastanın soru sorma hakkı açıklanmalıdır."},
+  {title:"6. Sorular ve gönüllü karar", text:"Hastanın soru sorma fırsatı olduğu ve kararını baskı altında kalmadan verebilmesi gerektiği açıklanmalıdır. Sesli okuma, hastanın anlamasını veya onam verdiğini tek başına kanıtlamaz."}
+ ];
+ const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
+ const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
+ let index=0, rate=1, queue=[], queuePos=0, isReading=false;
+ function renderSections(){
+  data.forEach((item,i)=>{
+   const card=document.createElement('article');card.className='section';card.id='section-'+i;
+   const h=document.createElement('h3');h.textContent=item.title;
+   const p=document.createElement('p');p.textContent=item.text;
+   const actions=document.createElement('div');actions.className='section-actions';
+   const b=document.createElement('button');b.className='secondary';b.textContent='🔊 Bu bölümü oku';b.setAttribute('aria-label',item.title+' bölümünü oku');b.addEventListener('click',()=>readOne(i));
+   actions.appendChild(b);card.append(h,p,actions);list.appendChild(card);
+  });
+ }
+ function updateCurrent(i){
+  index=Math.max(0,Math.min(data.length-1,i));
+  title.textContent=data[index].title;text.textContent=data[index].text;
+  document.querySelectorAll('.section').forEach((el,j)=>el.classList.toggle('is-active',j===index));
+  const pct=Math.round(((index+(isReading?0.5:0))/data.length)*100);
+  progress.value=Math.min(100,pct);progressLabel.textContent=Math.min(100,pct)+'%';
+ }
+ function speakText(str,onend){
+  if(!('speechSynthesis' in window)){text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
+  const u=new SpeechSynthesisUtterance(str);u.lang='tr-TR';u.rate=rate;
+  u.onstart=()=>{isReading=true;updateCurrent(index)};
+  u.onend=()=>{if(onend)onend()};
+  u.onerror=()=>{isReading=false};
+  window.speechSynthesis.speak(u);
+ }
+ function readOne(i){stopAll();updateCurrent(i);isReading=true;speakText(data[i].title+'. '+data[i].text,()=>{isReading=false;progress.value=Math.round(((i+1)/data.length)*100);progressLabel.textContent=progress.value+'%';text.textContent='Bu bölümün okuması tamamlandı.'})}
+ function readAll(start=0){stopAll();queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
+ function playNext(){
+  if(queuePos>=queue.length){isReading=false;progress.value=100;progressLabel.textContent='100%';text.textContent='Tüm bölümlerin okunması tamamlandı.';return}
+  const originalIndex=data.length-queue.length+queuePos;updateCurrent(originalIndex);
+  speakText(queue[queuePos].title+'. '+queue[queuePos].text,()=>{queuePos++;playNext()});
+ }
+ function stopAll(){if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
+ document.getElementById('play').addEventListener('click',()=>readAll(0));
+ document.getElementById('stop').addEventListener('click',()=>{stopAll();text.textContent='Okuma durduruldu.'});
+ document.getElementById('pause').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
+ document.getElementById('resume').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.paused){window.speechSynthesis.resume();text.textContent='Okumaya devam ediliyor.'}});
+ document.getElementById('previous').addEventListener('click',()=>readOne(Math.max(0,index-1)));
+ document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
+ document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if('speechSynthesis'in window&&window.speechSynthesis.speaking)readOne(index)}));
+ renderSections();updateCurrent(0);
+})();
+</script>
+</body>
+</html>
