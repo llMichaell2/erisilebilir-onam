@@ -64,7 +64,7 @@
   <p>Ad-soyad, T.C. kimlik numarası, doğum tarihi, telefon ve tarih-saat zorunludur; soru atlanamaz. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
   <label><input type="checkbox" id="qa-auto" checked> Soru bitince otomatik dinle</label>
-  <p class="muted">Başlattıktan sonra mikrofon izni verin. Her soru ve cevap doğrulaması bittikten sonra konuşabilirsiniz. Tarih ve saat için “evet” diyebilirsiniz. Ses alınamazsa mikrofon düğmesiyle tekrar deneyebilir veya yazabilirsiniz.</p>
+  <p class="muted">Başlattıktan sonra mikrofon izni verin. Her soru ve cevap doğrulaması bittikten sonra konuşabilirsiniz. Ad-soyad ve tarih cevabınızı bitirince “tamam” deyin; duraksamalar cevabı bitirmez. “Baştan” diyerek cevabı temizleyebilirsiniz. Önerilen tarih ve saat için “evet” diyebilirsiniz. Ses alınamazsa mikrofon düğmesiyle tekrar deneyebilir veya yazabilirsiniz.</p>
   <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
   <div id="qa-work" hidden>
     <h3 id="qa-question" tabindex="-1"></h3>
@@ -222,12 +222,12 @@
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="validation.js?v=11"></script>
+<script src="validation.js?v=17"></script>
 <script src="config.js?v=12"></script>
 <script src="records.js?v=11"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="qr-ui.js?v=11"></script>
-<script src="qa.js?v=16"></script>
+<script src="qa.js?v=17"></script>
 <script src="accessibility.js?v=11"></script>
 </body>
 </html>

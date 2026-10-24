@@ -23,8 +23,9 @@ const root=path.resolve(__dirname,'..');
     window.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
     const tr={lang:'tr-TR',voiceURI:'turkish',name:'Türkçe',localService:true};
     Object.defineProperty(window,'speechSynthesis',{value:{speaking:false,paused:false,getVoices(){return [{lang:'en-US',name:'English'},tr]},addEventListener(){},cancel(){this.speaking=false},resume(){this.paused=false},pause(){this.paused=true},speak(u){window.lastUtterance=u;spoken.push({text:u.text,rate:u.rate,lang:u.lang,voice:u.voice?.lang});this.speaking=true;u.onstart?.()}}});
-    if(recognition){window.SpeechRecognition=class{start(){window.mic=this;this.onstart?.()}abort(){this.onend?.()}}}else{window.SpeechRecognition=undefined;window.webkitSpeechRecognition=undefined}
+    if(recognition){window.SpeechRecognition=class{start(){window.mic=this;this.history=[];const handler=this.onresult;this.onresult=e=>{this.history.push(...Array.from(e.results,r=>Object.assign(Array.from(r),{isFinal:r.isFinal??true})));handler({...e,results:this.history})};this.onstart?.()}abort(){this.onend?.()}}}else{window.SpeechRecognition=undefined;window.webkitSpeechRecognition=undefined}
    },{recognition});
+   await page.route('https://*.supabase.co/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{"message":"Test: no live database requests"}'}));
    await page.goto('https://onam.test/');
    return page;
   }
@@ -65,13 +66,14 @@ const root=path.resolve(__dirname,'..');
   await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'evet'}]]}));assert.equal(await p.locator('#qa-result').isVisible(),false);
   await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'Onam formunu okudum anladım onaylıyorum'}]]}));
   const summary=await p.locator('#qa-summary').textContent();assert.ok(summary.includes('onaylıyorum'));assert.ok(!summary.includes('Atlandı'));checks++;
-  const downloadEvent=p.waitForEvent('download');await p.locator('#qa-download').click();const download=await downloadEvent;
-  const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.clinicalConsentRecorded,false);assert.equal(report.identityVerified,false);assert.equal(Object.keys(report.answers).length,6);assert.equal(report.answers.tc.value,'10000000146');checks++;
+  await p.evaluate(()=>{const create=URL.createObjectURL.bind(URL);URL.createObjectURL=blob=>{window.exportBlob=blob;return create(blob)}});
+  const downloadEvent=p.waitForEvent('download');await p.locator('#qa-download').click();const download=await downloadEvent;assert.equal(download.suggestedFilename(),'onam-formu.json');
+  const report=JSON.parse(await p.evaluate(()=>exportBlob.text()));assert.equal(report.clinicalConsentRecorded,false);assert.equal(report.identityVerified,false);assert.equal(Object.keys(report.answers).length,6);assert.equal(report.answers.tc.value,'10000000146');checks++;
   await p.locator('#qa-clear').click();assert.equal(await p.locator('#qa-summary').textContent(),'');assert.equal(await p.locator('#qa-answer').inputValue(),'');
   console.log('PASS: mandatory fields, format/checksum/date validation, no skip, refusal, exact final declaration, export and deletion');
-  await p.locator('#qa-start').click();await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'Sesli Deneme'}]]}));assert.equal(await p.locator('#qa-confirm').isVisible(),true);
+  await p.locator('#qa-start').click();await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'Sesli Deneme tamam'}]]}));assert.equal(await p.locator('#qa-confirm').isVisible(),true);
   await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'düzelteceğim'}]]}));assert.equal(await p.locator('#qa-answer').inputValue(),'');
-  await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'Sesli Örnek'}]]}));
+  await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'Sesli Örnek tamam'}]]}));
   await p.locator('#qa-listen').click();await p.evaluate(()=>mic.onresult({results:[[{transcript:'bilgilerim doğru'}]]}));assert.match(await p.locator('#qa-question').textContent(),/kimlik/);checks++;
   for(const error of ['not-allowed','network','no-speech','audio-capture']){
    await p.locator('#qa-listen').click();await p.evaluate(error=>{mic.onerror({error});mic.onend()},error);assert.equal(await p.locator('#qa-listen').isEnabled(),true);assert.match(await p.locator('#qa-status').textContent(),/yaz|Yaz/);
@@ -82,6 +84,30 @@ const root=path.resolve(__dirname,'..');
   const mobile=await pageWithMocks({recognition:false,mobile:true});await mobile.locator('#qa-start').click();assert.equal(await mobile.locator('#qa-listen').isDisabled(),true);await mobile.locator('#qa-answer').fill('Mobil Deneme');await mobile.locator('#qa-submit').click();await mobile.locator('#qa-confirm').click();
   for(const width of [320,375,768,1280]){await mobile.setViewportSize({width,height:900});assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}checks++;
   console.log('PASS: unsupported recognition uses keyboard; 320/375/768/1280px layouts');
+  const slow=await pageWithMocks({mobile:true});
+  async function finishPrompt(){await slow.evaluate(()=>{let guard=0;while(window.lastUtterance&&guard++<100){const u=window.lastUtterance;window.lastUtterance=null;u.onend?.()}})}
+  async function voice(text){await slow.evaluate(text=>mic.onresult({results:[Object.assign([{transcript:text}],{isFinal:true})]}),text)}
+  async function approve(){await finishPrompt();await voice('doğru');await finishPrompt()}
+  await slow.locator('#qa-start').click();await finishPrompt();
+  await voice('Ali');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await voice('Veli');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await voice('tamam');assert.equal(await slow.locator('#qa-answer').inputValue(),'Ali Veli');await approve();
+  await voice('bir sıfır sıfır sıfır sıfır');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await slow.evaluate(()=>mic.onend());assert.match(await slow.locator('#qa-status').textContent(),/korundu/);
+  await slow.locator('#qa-listen').click();await voice('sıfır sıfır sıfır bir dört altı');assert.equal(await slow.locator('#qa-answer').inputValue(),'10000000146');await approve();
+  await voice('beş ekim 200');await voice('tamam');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);await finishPrompt();
+  for(const text of ['beş','ekim','iki bin']){await voice(text);assert.equal(await slow.locator('#qa-confirm').isVisible(),false)}
+  assert.match(await slow.locator('#qa-answer').inputValue(),/iki bin/);
+  await voice('beş');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await voice('tamam');assert.equal(await slow.locator('#qa-answer').inputValue(),'05.10.2005');await approve();
+  await voice('sıfır beş üç sekiz');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await voice('bir iki üç dört beş altı yedi');assert.equal(await slow.locator('#qa-answer').inputValue(),'05381234567');await approve();
+  const suggested=await slow.locator('#qa-answer').inputValue();await voice('evet');assert.equal(await slow.locator('#qa-answer').inputValue(),suggested);await approve();
+  await voice('Onam formunu okudum');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await voice('anladım onaylıyorum');assert.equal(await slow.locator('#qa-confirm').isVisible(),true);
+  await finishPrompt();await voice('evet');assert.equal(await slow.locator('#qa-result').isVisible(),false);
+  await slow.locator('#qa-reset').click();checks++;
+  console.log('PASS: mobile viewport, paused name, TC recovery, paused spoken October/year, phone chunks, suggested time and exact declaration safeguards');
   console.log(`${checks} check groups passed. Audio and recognition mocked; real device audio/network/microphone need manual validation.`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

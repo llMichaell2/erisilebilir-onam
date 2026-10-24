@@ -16,9 +16,9 @@ const root=path.resolve(__dirname,'..');
   const before=fs.readFileSync(path.join(work,'audio/manifest.json'),'utf8');
   result=run();assert.notEqual(result.status,0);assert.equal(fs.readFileSync(path.join(work,'audio/manifest.json'),'utf8'),before);
   console.log('PASS: public-message audio generation contract, public clips, cache reuse, failure preserves manifest (provider mocked)');
-  const fakePython=path.join(work,'fake-python');
-  fs.writeFileSync(fakePython,'#!'+process.execPath+'\n'+`const fs=require('node:fs');const input=fs.readFileSync(0,'utf8');if(!input)process.exit(1);fs.writeFileSync(process.argv[3],Buffer.alloc(200));`,{mode:0o755});
-  result=spawnSync(process.execPath,['tools/generate-audio.mjs'],{cwd:work,env:{...process.env,TTS_API_KEY:'',ONAM_VOICE_PYTHON:fakePython},encoding:'utf8'});
+  // Use Node as the fake executable on Windows as well as Unix; no shebang support required.
+  fs.writeFileSync(path.join(work,'tools/edge-voice.py'),`const fs=require('node:fs');const input=fs.readFileSync(0,'utf8');if(!input)process.exit(1);fs.writeFileSync(process.argv[2],Buffer.alloc(200));`);
+  result=spawnSync(process.execPath,['tools/generate-audio.mjs'],{cwd:work,env:{...process.env,TTS_API_KEY:'',ONAM_VOICE_PYTHON:process.execPath},encoding:'utf8'});
   assert.equal(result.status,0,result.stderr+result.stdout);
   manifest=JSON.parse(fs.readFileSync(path.join(work,'audio/manifest.json')));
   assert.equal(manifest.provider,'edge');assert.equal(manifest.voice,'tr-TR-EmelNeural');assert.ok(Object.keys(manifest.clips).length>12);
