@@ -58,7 +58,7 @@ button{
 }
 button:hover{transform:translateY(-1px)}
 button:active{transform:translateY(0)}
-button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--focus);outline-offset:3px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--focus);outline-offset:3px}
 .primary{background:#e0fff6;color:#06474c;border-color:#e0fff6}
 .primary:hover{background:#fff;border-color:#fff}
 .secondary{background:var(--mint);color:#06474c;border-color:#b7e4dc}
@@ -89,6 +89,11 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
   .panel,header{border:2px solid #142d3a}
   .secondary,.plain,.section{border-width:2px}
 }
+input,select{font:inherit;width:100%;max-width:100%;padding:12px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+button:disabled{opacity:.55;cursor:default;transform:none}
+[hidden]{display:none!important}
+#qa-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+#qa-summary{white-space:pre-line;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -116,8 +121,11 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
 </header>
 
 <section class="panel">
-  <h2>Okuma hızı</h2>
-  <p class="muted">Size uygun hızı seçin. Varsayılan hız 1× değeridir.</p>
+  <h2>Ses ve okuma hızı</h2>
+  <label for="voice-select">Türkçe ses</label>
+  <select id="voice-select"><option value="">Cihazın Türkçe sesi</option></select>
+  <p class="muted" id="voice-status" role="status"></p>
+  <p class="muted">Size uygun hızı seçin. Varsayılan hız 1× değeridir. Ses ve hız değişiklikleri bir sonraki cümlede uygulanır.</p>
   <div class="speed-list" role="group" aria-label="Okuma hızı">
     <button class="plain speed" data-rate="0.5" aria-pressed="false">0.5×</button>
     <button class="plain speed" data-rate="0.75" aria-pressed="false">0.75×</button>
@@ -133,16 +141,38 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
   <div class="sections" id="sections"></div>
 </section>
 
-<section class="panel" aria-labelledby="patient-fields">
-  <h2 id="patient-fields">Formdaki hasta bilgileri ve imza alanları</h2>
-  <p>Hasta bilgileri: Adı soyadı, T.C. kimlik numarası, doğum tarihi, telefon, tarih / saat.</p>
-  <p>Onam alanları: Hasta / vekil adı soyadı, imza ve tarih. İsteğe bağlı tanık adı soyadı ve imza. Doktor / radyolog adı soyadı, imza ve kaşe.</p>
-  <p class="muted">Bu alanlar kaynak formdaki boş alanları gösterir; bu sayfada doldurulmaz veya kaydedilmez. İşlem seçimi ve gerektiğinde kontrast madde kullanımı sağlık ekibiyle netleştirilmelidir.</p>
+<section class="panel" aria-labelledby="qa-heading">
+  <h2 id="qa-heading">Sesli soru–cevap denemesi</h2>
+  <p>Deneme bilgileri kullanın. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Bilgiler yalnızca bu açık sayfada tutulur, hastaneye gönderilmez. Sayfa yenilendiğinde silinir.</p>
+  <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. Gerçek hasta bilgisi kullanmayın.</p>
+  <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
+  <div id="qa-work" hidden>
+    <h3 id="qa-question" tabindex="-1"></h3>
+    <p id="qa-status" role="status" aria-live="polite"></p>
+    <label for="qa-answer">Cevabınız</label>
+    <input id="qa-answer" autocomplete="off" maxlength="150" aria-describedby="qa-status">
+    <div id="qa-actions">
+      <button class="secondary" id="qa-listen">Mikrofonla cevap ver</button>
+      <button class="plain" id="qa-repeat">Soruyu tekrar dinle</button>
+      <button class="secondary" id="qa-submit">Cevabımı kontrol et</button>
+      <button class="secondary" id="qa-confirm" hidden>Evet, doğru</button>
+      <button class="plain" id="qa-correct" hidden>Hayır, düzelteceğim</button>
+      <button class="plain" id="qa-skip" hidden>Bu soruyu atla</button>
+      <button class="plain" id="qa-reset">Durdur ve bilgileri sil</button>
+    </div>
+  </div>
+  <div id="qa-result" hidden>
+    <h3>Deneme cevapları</h3>
+    <p id="qa-summary"></p>
+    <p>Bu özet hastane kaydı, kimlik doğrulaması veya imza yerine geçmez. Dinledim / anladım beyanı ayrı gösterilir; işlem ve kontrast madde onamı alınmaz.</p>
+    <button class="secondary" id="qa-download">Deneme özetini indir (JSON)</button>
+    <button class="plain" id="qa-clear">Bilgileri sil</button>
+  </div>
 </section>
 
 <section class="panel">
   <h2>Önemli bilgi</h2>
-  <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Bu sürüm sesli yanıt, kimlik doğrulama, imza veya hasta kaydı almaz.</p>
+  <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Sesli soru–cevap bölümü bir denemedir; kimlik doğrulaması, imza veya hastane kaydı oluşturmaz.</p>
 </section>
 </main>
 <script>
@@ -175,7 +205,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
 ];
  const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
  const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
- let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0;
+ let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0, activeUtterance=null;
  function renderSections(){
   data.forEach((item,i)=>{
    const card=document.createElement('article');card.className='section';card.id='section-'+i;
@@ -203,10 +233,29 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
    .replace(/X-ışınları/g,'iks ışınları').replace(/vb\./g,'ve benzeri')
    .replace(/\(([^)]*)\)/g,', $1,').replace(/\s*\/\s*/g,' veya ');
  }
- function speakText(str,onend){
+ const voiceSelect=document.getElementById('voice-select');
+ function loadVoices(){
+  if(!('speechSynthesis' in window))return;
+  const previous=voiceSelect.value;
+  const voices=window.speechSynthesis.getVoices().filter(v=>/^tr(?:-|$|_)/i.test(v.lang));
+  voiceSelect.replaceChildren(new Option('Cihazın Türkçe sesi',''));
+  voices.forEach(v=>voiceSelect.add(new Option(v.name+(v.localService?' · cihaz sesi':' · çevrimiçi'),v.voiceURI)));
+  if([...voiceSelect.options].some(o=>o.value===previous))voiceSelect.value=previous;
+  document.getElementById('voice-status').textContent=voices.length?'Sesler cihazınıza göre değişir. En anlaşılır sesi buradan deneyebilirsiniz.':'Henüz Türkçe ses bulunamadı. Cihazın metin okuma ayarlarından Türkçe ses yükleyebilirsiniz.';
+ }
+ if('speechSynthesis' in window){window.speechSynthesis.addEventListener('voiceschanged',loadVoices);loadVoices()}
+ function speakText(str,onend,formReading=true){
   if(!('speechSynthesis' in window)){isReading=false;text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
   const session=speechSession;
-  const chunks=prepareSpeech(str).match(/[^.!?\n]+[.!?]?/g)||[];
+  const sentences=prepareSpeech(str).match(/[^.!?\n]+[.!?]?/g)||[];
+  const chunks=sentences.flatMap(sentence=>{
+   const parts=[];let part='';
+   for(const word of sentence.trim().split(/\s+/)){
+    if(part.length+word.length>180){parts.push(part);part=''}
+    part+=(part?' ':'')+word;
+   }
+   if(part)parts.push(part);return parts;
+  });
   let position=0;
   function speakNext(){
    if(session!==speechSession)return;
@@ -215,11 +264,13 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
    u.lang='tr-TR';u.rate=rate;
    const voices=window.speechSynthesis.getVoices();
    const turkish=voices.filter(v=>/^tr(?:-|_)/i.test(v.lang)||v.lang.toLowerCase()==='tr');
-   const voice=turkish.find(v=>v.default)||turkish[0];
+   const voice=turkish.find(v=>v.voiceURI===voiceSelect.value)||turkish.find(v=>v.default)||turkish.find(v=>v.localService)||turkish[0];
    if(voice)u.voice=voice;
-   u.onstart=()=>{if(session===speechSession){isReading=true;updateCurrent(index)}};
+   u.onstart=()=>{if(session===speechSession){isReading=true;if(formReading)updateCurrent(index)}};
    u.onend=speakNext;
    u.onerror=(event)=>{if(session!==speechSession)return;isReading=false;if(event.error!=='canceled'&&event.error!=='interrupted')text.textContent='Sesli okuma tamamlanamadı. Bölümü tekrar başlatmayı deneyin.'};
+   activeUtterance=u;
+   window.speechSynthesis.resume();
    window.speechSynthesis.speak(u);
   }
   speakNext();
@@ -231,16 +282,18 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
   const originalIndex=data.length-queue.length+queuePos;updateCurrent(originalIndex);
   speakText(queue[queuePos].title+'. '+queue[queuePos].text,()=>{queuePos++;playNext()});
  }
- function stopAll(){speechSession++;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
+ function stopAll(){window.dispatchEvent(new Event('onam-stop'));speechSession++;activeUtterance=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
  document.getElementById('play').addEventListener('click',()=>readAll(0));
  document.getElementById('stop').addEventListener('click',()=>{stopAll();text.textContent='Okuma durduruldu.'});
  document.getElementById('pause').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
  document.getElementById('resume').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.paused){window.speechSynthesis.resume();text.textContent='Okumaya devam ediliyor.'}});
  document.getElementById('previous').addEventListener('click',()=>readOne(Math.max(0,index-1)));
  document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
- document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if('speechSynthesis'in window&&window.speechSynthesis.speaking)readOne(index)}));
+ document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
+ window.onamAudio={stop:stopAll,speak:(message,done)=>speakText(message,done,false)};
  renderSections();updateCurrent(0);
 })();
 </script>
+<script src="qa.js"></script>
 </body>
 </html>
