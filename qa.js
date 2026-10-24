@@ -89,7 +89,7 @@
   const complete=questions.every(q=>answers[q.key]?.value);
   if(!complete)throw new Error('Zorunlu alan eksik');
   $('summary').textContent=questions.map(q=>`${q.label}: ${answers[q.key].value}`).join('\n');
-  $('download').focus();say('Son beyanınız alındı. İşlem tamamlandı.');saveReport();
+  $('download').focus();say('Son beyanınız alındı. İşlem tamamlandı. Geçmiş olsun. Sağlıklı günler dileriz.');saveReport();
  }
  async function saveReport(){
   if(!report)return;
