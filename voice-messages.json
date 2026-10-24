@@ -1,0 +1,16 @@
+{
+  "digits": ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"],
+  "tc": "Türkiye Cumhuriyeti kimlik numaranız için cevabınız:",
+  "phone": "Telefon numaranız için cevabınız:",
+  "birthDate": "Doğum tarihiniz için cevabınız. Rakamları sırayla okuyorum:",
+  "dateTime": "Tarih ve saat için cevabınız. Rakamları sırayla okuyorum:",
+  "confirm": "Bilgilerim doğru veya düzelteceğim diyebilirsiniz.",
+  "messages": [
+    "Beyanınız: Onam formunu okudum, anladım, onaylıyorum. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.",
+    "Son beyanınız alındı. Deneme tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.",
+    "Onay vermediniz. Beyan tamamlanmadı.",
+    "Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.",
+    "Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.",
+    "Ad ve soyadı birlikte girin."
+  ]
+}

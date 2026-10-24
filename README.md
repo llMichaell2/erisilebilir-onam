@@ -17,7 +17,7 @@ Depo kökünde `python3 -m http.server 8000` çalıştırın. Yayındaki GitHub 
 
 ## Sınırlar
 
-- Konuşma tanıma, Chrome sağlayıcısının çevrimiçi hizmetini kullanabilir. Ses dosyaları üretilmemişse cihazın Türkçe sesi kullanılır. Doğal ses durum bilgisi sayfada gösterilir. Cevaplar cihaz sesiyle geri okunur; T.C. ve telefon rakam rakam okunur.
+- Konuşma tanıma, Chrome sağlayıcısının çevrimiçi hizmetini kullanabilir. Ses dosyaları üretilmemişse cihazın Türkçe sesi kullanılır. Doğal ses durum bilgisi sayfada gösterilir. T.C., telefon ve tarih cevapları aynı kadın sesinin rakam kayıtlarıyla geri okunur; ad-soyad için cihaz sesi kullanılır.
 - Cevaplar yalnızca sayfa belleğinde tutulur; localStorage, veritabanı veya hastane sistemine yazılmaz. Sayfayı yenilemek cevapları siler. İndirme kullanıcı tarafından başlatılır.
 - Geri okuyup onaylatma kimlik doğrulaması değildir. Dinleme/anlama beyanı işlem veya kontrast madde onamı ve imza yerine geçmez. Gerçek hastane kaydı için ayrıca yetkilendirilmiş sunucu ve kurum entegrasyonu gerekir.
 - Kaynak fotoğraflardaki klinik metinler aktarılmıştır; tıbbi geçerlilik değerlendirmesi yapılmamıştır.
@@ -28,7 +28,7 @@ Playwright ve Chromium bulunan geliştirme ortamında `node tests/browser.cjs` �
 
 ## Ücretsiz doğal ses dosyalarının hazırlanması
 
-Varsayılan üretim yolu `edge-tts` ve Türkçe `tr-TR-EmelNeural` sesidir. API anahtarı gerekmez. Bu üçüncü taraf araç Microsoft’un çevrimiçi Edge ses servisine bağlıdır; hizmetin kullanılabilirliği garanti edilemez. `speech.platform.bing.com` erişimi gerekir. Kullanıcı cevapları bu servise gönderilmez; yalnızca formun altı bölümü ve altı sabit soru seslendirilir.
+Varsayılan üretim yolu `edge-tts` ve Türkçe `tr-TR-EmelNeural` sesidir. API anahtarı gerekmez. Bu üçüncü taraf araç Microsoft’un çevrimiçi Edge ses servisine bağlıdır; hizmetin kullanılabilirliği garanti edilemez. `speech.platform.bing.com` erişimi gerekir. Kullanıcı cevapları bu servise gönderilmez; yalnızca formun altı bölümü, sabit sorular ve ortak doğrulama/rakam ifadeleri seslendirilir.
 
 Depo dışında bir sanal ortam hazırlayın:
 
@@ -38,7 +38,7 @@ python3 -m venv /tmp/onam-voice-venv
 ONAM_VOICE_PYTHON=/tmp/onam-voice-venv/bin/python node tools/generate-audio.mjs
 ```
 
-Oluşan 12 kaydı dinleyip telaffuzu kontrol edin. `audio/` MP3 dosyaları ve manifestini birlikte yayımlayın. GitHub Pages dosyaları çalar; sürekli sunucu gerekmez. Metin değişirse komutu tekrar çalıştırın. Değişmeyen kayıtlar yeniden üretilmez, başarısız üretimde eski manifest korunur. Boş manifest, doğal sesin henüz etkin olmadığı anlamına gelir. Servis bağlantısı ve gerçek ses kalitesi başarılı olmadan doğal ses hazır sayılmaz.
+Oluşan kayıtları dinleyip telaffuzu kontrol edin. `audio/` MP3 dosyaları ve manifestini birlikte yayımlayın. GitHub Pages dosyaları çalar; sürekli sunucu gerekmez. Metin değişirse komutu tekrar çalıştırın. Değişmeyen kayıtlar yeniden üretilmez, başarısız üretimde eski manifest korunur. Boş manifest, doğal sesin henüz etkin olmadığı anlamına gelir. Servis bağlantısı ve gerçek ses kalitesi başarılı olmadan doğal ses hazır sayılmaz.
 
 Ücretli OpenAI üretimi ayrı ve açıkça seçilen bir seçenektir: `NODE_USE_ENV_PROXY=1 node tools/generate-audio.mjs --provider=openai`. Bu yol `TTS_API_KEY` gerektirir; varsayılan komut bu hizmeti kullanmaz. Anahtarı asla kaynak dosyasına veya GitHub’a yazmayın.
 

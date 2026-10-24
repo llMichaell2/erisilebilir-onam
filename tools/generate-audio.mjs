@@ -12,7 +12,9 @@ vm.runInThisContext(fs.readFileSync('speech-text.js','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const data=JSON.parse(html.match(/const data = (\[[\s\S]*?\]);/)[1]);
 const prompts=[...fs.readFileSync('qa.js','utf8').matchAll(/prompt:'([^']+)'/g)].map(m=>m[1]);
-const messages=[...data.map(d=>d.title+'. '+d.text),...prompts];
+const bank=JSON.parse(fs.readFileSync('voice-messages.json','utf8'));
+const errors=[...fs.readFileSync('qa.js','utf8').matchAll(/error:'([^']+)'/g)].map(m=>m[1]);
+const messages=[...new Set([...data.map(d=>d.title+'. '+d.text),...prompts,...errors,...Object.values(bank).flat()])];
 const clips={};fs.mkdirSync('audio',{recursive:true});
 for(const raw of messages){
  const input=globalThis.prepareSpeech(raw);

@@ -104,7 +104,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <h1>🔊 Onam Formu Sesli Okuyucu</h1>
   <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için sesli okuma prototipi.</p>
   <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
-  <p style="font-size:.85rem;margin-top:8px">Sürüm: Ücretsiz doğal ses · 4</p>
+  <p style="font-size:.85rem;margin-top:8px">Sürüm: Aynı sesle numara doğrulama · 5</p>
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -179,8 +179,8 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Sesli soru–cevap bölümü bir denemedir; kimlik doğrulaması, imza veya hastane kaydı oluşturmaz.</p>
 </section>
 </main>
-<script src="speech-text.js?v=4"></script>
-<script src="natural-audio.js?v=4"></script>
+<script src="speech-text.js?v=5"></script>
+<script src="natural-audio.js?v=5"></script>
 <script>
 (() => {
  const data = [
@@ -241,7 +241,8 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   document.getElementById('voice-status').textContent=voices.length?'Bu sesler cihazınıza göre değişir. En anlaşılır sesi buradan deneyebilirsiniz.':'Henüz Türkçe ses bulunamadı. Cihazın metin okuma ayarlarından Türkçe ses yükleyebilirsiniz.';
  }
  if('speechSynthesis' in window){window.speechSynthesis.addEventListener('voiceschanged',loadVoices);loadVoices()}
- function speakText(str,onend,formReading=true){
+ function speakText(str,onend,formReading=true,parts=null){
+  if(parts&&window.onamNatural?.playParts(parts,{rate,start:()=>{isReading=true},done:onend,fallback:()=>speakDevice(str,onend,formReading)}))return;
   if(window.onamNatural?.play(str,{rate,start:()=>{isReading=true;if(formReading)updateCurrent(index)},done:onend,fallback:()=>speakDevice(str,onend,formReading)}))return;
   speakDevice(str,onend,formReading);
  }
@@ -265,7 +266,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
    u.lang='tr-TR';u.rate=rate;
    const voices=window.speechSynthesis.getVoices();
    const turkish=voices.filter(v=>/^tr(?:-|_)/i.test(v.lang)||v.lang.toLowerCase()==='tr');
-   const voice=turkish.find(v=>v.voiceURI===voiceSelect.value)||turkish.find(v=>/google|natural|neural|online/i.test(v.name))||turkish.find(v=>v.default)||turkish[0];
+   const voice=turkish.find(v=>v.voiceURI===voiceSelect.value)||turkish.find(v=>/emel|filiz/i.test(v.name))||turkish.find(v=>/google|natural|neural|online/i.test(v.name))||turkish.find(v=>v.default)||turkish[0];
    if(voice)u.voice=voice;
    u.onstart=()=>{if(session===speechSession){isReading=true;if(formReading)updateCurrent(index)}};
    u.onend=speakNext;
@@ -291,11 +292,11 @@ button:disabled{opacity:.55;cursor:default;transform:none}
  document.getElementById('previous').addEventListener('click',()=>readOne(Math.max(0,index-1)));
  document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
  document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);window.onamNatural?.setRate(rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
- window.onamAudio={stop:stopAll,speak:(message,done)=>speakText(message,done,false)};
+ window.onamAudio={stop:stopAll,speak:(message,done,parts)=>speakText(message,done,false,parts)};
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="validation.js?v=4"></script>
-<script src="qa.js?v=4"></script>
+<script src="validation.js?v=5"></script>
+<script src="qa.js?v=5"></script>
 </body>
 </html>

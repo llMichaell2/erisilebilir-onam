@@ -1,5 +1,5 @@
 globalThis.prepareSpeech=function(str){
-  return str.replace(/^\d+\.\s*/, '')
+  return str.replace(/^\d+\.\s*/, '').replace(/T\.C\./g,'Türkiye Cumhuriyeti')
    .replace(/Bilgisayarlı Tomografi \(BT \/ Tomografi\)/gi,'bilgisayarlı tomografi')
    .replace(/Manyetik Rezonans Görüntüleme \(MR\)/gi,'emar')
    .replace(/%0,01[–-]0,1/g,'yüzde sıfır virgül sıfır bir ile yüzde sıfır virgül bir arasında')

@@ -12,13 +12,15 @@
   {key:'dateTime',label:'Tarih ve saat',prompt:'Form için tarih ve saati kontrol edin. Cihazınızın yerel tarih ve saati önerildi. Değiştirebilir veya doğrulayabilirsiniz.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
   {key:'declaration',label:'Son beyan',prompt:'Son beyanınız için şunu söyleyin veya yazın: Onam formunu okudum, anladım, onaylıyorum.',final:true}
  ];
- let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null;
+ let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,confirmationText='',confirmationParts;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
  const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
- function say(message){window.onamAudio.stop();window.onamAudio.speak(message)}
+ let voiceBank=null;
+ fetch('voice-messages.json?v=5').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
+ function say(message,parts){window.onamAudio.stop();window.onamAudio.speak(message,undefined,parts)}
  function controls(){
   const confirm=phase==='confirm';
   $('confirm').hidden=!confirm;$('correct').hidden=!confirm;
@@ -28,7 +30,7 @@
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
-  phase='answer';candidate='';$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
+  phase='answer';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   $('question').textContent=`Soru ${step+1} / ${questions.length}: ${questions[step].prompt}`;
   $('status').textContent=Recognition?'Soruyu dinledikten sonra mikrofon düğmesine basın veya cevabınızı yazın.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
@@ -50,7 +52,9 @@
   candidate=value;$('answer').value=value;phase='confirm';controls();
   const spoken=['tc','phone'].includes(q.key)?V.spokenDigits(value):value;
   const message=q.final?`Beyanınız: ${declaration}. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
-  $('status').textContent=message;say(message);
+  const parts=voiceBank&&['tc','phone','birthDate','dateTime'].includes(q.key)?[voiceBank[q.key],...[...value].filter(d=>/\d/.test(d)).map(d=>voiceBank.digits[Number(d)]),voiceBank.confirm]:undefined;
+  confirmationText=message;confirmationParts=parts;
+  $('status').textContent=message;say(message,parts);
  }
  function confirm(){
   if(phase!=='confirm')return;
@@ -67,7 +71,7 @@
   $('download').focus();say('Son beyanınız alındı. Deneme tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.');
  }
  function reset(){
-  phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;step=0;
+  phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
   $('work').hidden=true;$('result').hidden=true;$('start').hidden=false;$('start').focus();
  }
@@ -100,8 +104,8 @@
  $('submit').onclick=()=>submit($('answer').value);
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
- $('repeat').onclick=()=>say(phase==='confirm'?$('status').textContent:questions[step].prompt);
+ $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questions[step].prompt,phase==='confirm'?confirmationParts:undefined);
  $('reset').onclick=reset;$('clear').onclick=reset;
  $('download').onclick=()=>{if(!report)return;const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='onam-deneme-ozeti.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
- window.addEventListener('pagehide',()=>{phase='idle';abortMic();answers={};report=null;candidate='';$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});
+ window.addEventListener('pagehide',()=>{phase='idle';abortMic();answers={};report=null;candidate='';confirmationText='';confirmationParts=undefined;$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});
 })();
