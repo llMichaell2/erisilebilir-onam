@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
  let checks=0;
  try{
-  async function pageWithMocks({recognition=true,mobile=false}={}){
+  async function pageWithMocks({recognition=true,mobile=false,welcome=false}={}){
    const page=await browser.newPage(mobile?{viewport:{width:375,height:812},isMobile:true,hasTouch:true}:{});
    await page.route('https://onam.test/**',route=>{
     const pathname=new URL(route.request().url()).pathname;
@@ -27,6 +27,7 @@ const root=path.resolve(__dirname,'..');
    },{recognition});
    await page.route('https://*.supabase.co/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{"message":"Test: no live database requests"}'}));
    await page.goto('https://onam.test/');
+   if(!welcome)await page.locator('#welcome-dismiss').click();
    return page;
   }
   const p=await pageWithMocks();const errors=[];p.on('pageerror',e=>errors.push(e.message));
@@ -110,6 +111,34 @@ const root=path.resolve(__dirname,'..');
   await finishPrompt();await voice('onaylıyorum');assert.equal(await slow.locator('#qa-result').isVisible(),true);assert.match(await slow.locator('#qa-summary').textContent(),/Onam formunu okudum, anladım, onaylıyorum/);
   await slow.locator('#qa-clear').click();checks++;
   console.log('PASS: mobile viewport, paused name, TC recovery, paused spoken October/year, phone chunks, suggested time and exact declaration safeguards');
+  const guide=await pageWithMocks({welcome:true,mobile:true});
+  assert.equal(await guide.locator('#welcome-dialog').isVisible(),true);
+  assert.equal(await guide.evaluate(()=>spoken.length),0);
+  assert.equal(await guide.evaluate(()=>document.activeElement.id),'welcome-start');
+  for(const width of [320,375,768,1280]){await guide.setViewportSize({width,height:812});assert.equal(await guide.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}
+  await guide.setViewportSize({width:375,height:812});
+  await guide.screenshot({path:path.join(root,'../welcome-mobile.png')});
+  await guide.locator('#welcome-start').click();assert.equal(await guide.locator('#welcome-dialog').isVisible(),false);
+  assert.equal(await guide.locator('#guided-controls').isVisible(),true);
+  assert.equal(await guide.evaluate(()=>document.activeElement.textContent),'1. İşlemin açıklaması');
+  assert.equal(await guide.locator('#qa-work').isVisible(),false);
+  await guide.locator('#guided-pause').click();assert.equal(await guide.evaluate(()=>speechSynthesis.paused),true);
+  await guide.locator('#guided-resume').click();assert.equal(await guide.evaluate(()=>speechSynthesis.paused),false);
+  const visited=await guide.evaluate(()=>{
+   const seen=new Set();let guard=0;
+   while(document.getElementById('qa-work').hidden&&window.lastUtterance&&guard++<200){
+    seen.add(document.querySelector('.section.is-active').id);const u=window.lastUtterance;window.lastUtterance=null;u.onend?.();
+   }
+   return [...seen];
+  });
+  assert.deepEqual(visited,['section-0','section-1','section-2','section-3','section-4','section-5']);
+  assert.equal(await guide.locator('#qa-work').isVisible(),true);assert.match(await guide.locator('#qa-question').textContent(),/Adınız/);
+  assert.equal(await guide.locator('#guided-controls').isVisible(),false);
+  const stopped=await pageWithMocks({welcome:true});await stopped.locator('#welcome-start').click();
+  await stopped.evaluate(()=>window.beforeStop=lastUtterance);await stopped.locator('#guided-stop').click();await stopped.evaluate(()=>beforeStop.onend());
+  assert.equal(await stopped.locator('#qa-work').isVisible(),false);assert.equal(await stopped.locator('#guided-controls').isVisible(),false);
+  const escaped=await pageWithMocks({welcome:true});await escaped.keyboard.press('Escape');assert.equal(await escaped.locator('#welcome-dialog').isVisible(),false);assert.equal(await escaped.evaluate(()=>spoken.length),0);
+  checks++;console.log('PASS: initial accessible dialog, responsive layout, guided six-section reading/focus, pause/resume, automatic QA handoff, stop cancellation and Escape dismissal');
   console.log(`${checks} check groups passed. Audio and recognition mocked; real device audio/network/microphone need manual validation.`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

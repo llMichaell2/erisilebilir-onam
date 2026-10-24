@@ -5,9 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f8fc">
 <title>Onam Formu – Sesli Okuyucu</title>
-<link rel="stylesheet" href="theme.css?v=11">
+<link rel="stylesheet" href="theme.css?v=20">
 </head>
 <body>
+<dialog id="welcome-dialog" aria-labelledby="welcome-title" aria-describedby="welcome-description">
+ <span class="pill">Adım adım sesli rehber</span>
+ <h2 id="welcome-title">Sesli onam formunu başlat</h2>
+ <p id="welcome-description">Formun altı bölümü sırayla okunacak ve ekran okunan bölüme ilerleyecek. Ardından bilgiler ve son beyan kısmına geçeceğiz. İstediğiniz zaman duraklatabilir veya durdurabilirsiniz.</p>
+ <div class="welcome-actions"><button id="welcome-start" class="primary" autofocus>Sesli onam formunu başlat</button><button id="welcome-dismiss" class="plain">Kendim okuyacağım</button></div>
+</dialog>
+<div id="guided-controls" class="guided-controls" role="group" aria-label="Sesli rehber kontrolleri" hidden>
+ <span id="guided-stage" role="status"></span>
+ <button id="guided-pause">Duraklat</button><button id="guided-resume">Devam et</button><button id="guided-stop">Durdur</button>
+</div>
 <a class="skip-link" href="#main-content">İçeriğe geç</a>
 <div class="site-bar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O</span><span>Erişilebilir Onam<small>Bilgiyi herkes için erişilebilir kılın</small></span></a><div class="accessibility-bar" aria-label="Görünüm ayarları"><button id="text-size" aria-pressed="false">Aa · Büyük yazı</button><button id="contrast" aria-pressed="false">Yüksek kontrast</button></div></div>
 <p id="display-status" class="sr-only" role="status"></p>
@@ -137,11 +147,11 @@
 ];
  const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
  const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
- let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0, activeUtterance=null;
+ let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0, activeUtterance=null,guided=false,followed=-1;
  function renderSections(){
   data.forEach((item,i)=>{
    const card=document.createElement('article');card.className='section';card.id='section-'+i;
-   const h=document.createElement('h3');h.textContent=item.title;
+   const h=document.createElement('h3');h.textContent=item.title;h.tabIndex=-1;
    const p=document.createElement('p');p.textContent=item.text;
    const actions=document.createElement('div');actions.className='section-actions';
    const b=document.createElement('button');b.className='secondary';b.textContent='Bu bölümü oku';b.setAttribute('aria-label',item.title+' bölümünü oku');b.addEventListener('click',()=>readOne(i));
@@ -152,6 +162,11 @@
   index=Math.max(0,Math.min(data.length-1,i));
   title.textContent=data[index].title;text.textContent=data[index].text;
   document.querySelectorAll('.section').forEach((el,j)=>el.classList.toggle('is-active',j===index));
+  if(guided&&followed!==index){
+   followed=index;const card=document.getElementById('section-'+index),heading=card?.querySelector('h3');
+   card?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+   heading?.focus({preventScroll:true});document.getElementById('guided-stage').textContent=`Bölüm ${index+1} / ${data.length}`;
+  }
   const pct=Math.round(((index+(isReading?0.5:0))/data.length)*100);
   progress.value=Math.min(100,pct);progressLabel.textContent=Math.min(100,pct)+'%';
  }
@@ -204,13 +219,16 @@
   speakNext();
  }
  function readOne(i){stopAll();updateCurrent(i);isReading=true;speakText(data[i].title+'. '+data[i].text,()=>{isReading=false;progress.value=Math.round(((i+1)/data.length)*100);progressLabel.textContent=progress.value+'%';text.textContent='Bu bölümün okuması tamamlandı.'})}
- function readAll(start=0){stopAll();queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
+ function readAll(start=0,guide=false){stopAll();guided=guide;followed=-1;document.getElementById('guided-controls').hidden=!guide;queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
  function playNext(){
-  if(queuePos>=queue.length){isReading=false;progress.value=100;progressLabel.textContent='100%';text.textContent='Tüm bölümlerin okunması tamamlandı.';return}
+  if(queuePos>=queue.length){isReading=false;progress.value=100;progressLabel.textContent='100%';text.textContent='Tüm bölümlerin okunması tamamlandı.';
+   const proceed=guided;guided=false;document.getElementById('guided-controls').hidden=true;
+   if(proceed){document.getElementById('qa-start').click();document.getElementById('qa-panel').scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+   return}
   const originalIndex=data.length-queue.length+queuePos;updateCurrent(originalIndex);
   speakText(queue[queuePos].title+'. '+queue[queuePos].text,()=>{queuePos++;playNext()});
  }
- function stopAll(){window.onamNatural?.stop();window.dispatchEvent(new Event('onam-stop'));speechSession++;activeUtterance=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
+ function stopAll(){guided=false;document.getElementById('guided-controls').hidden=true;window.onamNatural?.stop();window.dispatchEvent(new Event('onam-stop'));speechSession++;activeUtterance=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
  document.getElementById('play').addEventListener('click',()=>readAll(0));
  document.getElementById('stop').addEventListener('click',()=>{stopAll();text.textContent='Okuma durduruldu.'});
  document.getElementById('pause').addEventListener('click',()=>{window.onamNatural?.pause();if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
@@ -219,6 +237,13 @@
  document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
  document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);window.onamNatural?.setRate(rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
  window.onamAudio={stop:stopAll,speak:(message,done,parts)=>speakText(message,done,false,parts)};
+ const welcome=document.getElementById('welcome-dialog');
+ document.getElementById('welcome-start').onclick=()=>{welcome.close();readAll(0,true)};
+ document.getElementById('welcome-dismiss').onclick=()=>{welcome.close();document.getElementById('qa-open').focus()};
+ welcome.addEventListener('cancel',()=>{setTimeout(()=>document.getElementById('qa-open').focus(),0)});
+ for(const [control,target] of [['guided-pause','pause'],['guided-resume','resume'],['guided-stop','stop']])document.getElementById(control).onclick=()=>document.getElementById(target).click();
+ window.addEventListener('DOMContentLoaded',()=>welcome.showModal());
+ window.addEventListener('pagehide',stopAll);
  renderSections();updateCurrent(0);
 })();
 </script>

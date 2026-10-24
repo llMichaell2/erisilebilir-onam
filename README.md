@@ -104,3 +104,7 @@ Tarih-saat adımına girildiği anda cihazın yerel tarih ve saati alınır, gö
 ## Son beyanı sesle tamamlama
 
 Hasta altıncı soruda tam beyan cümlesini söyler. Beyanı geri okunduktan sonra “beyanımı tamamla” veya “onaylıyorum” diyerek işlemi bitirir. Düğmeyle tamamlama ve tam cümleyi tekrar söyleme de desteklenir. “Evet”, “tamam” veya “onaylamıyorum” son beyanı tamamlamaz. Kayıtta hastanın tam beyan cümlesi korunur.
+
+## Sesli başlangıç rehberi
+
+Hasta sayfası açıldığında erişilebilir bir başlangıç penceresi görünür. “Sesli onam formunu başlat” düğmesi kullanıcı dokunuşuyla altı bölümün sırayla okunmasını başlatır; ekran ve klavye odağı okunan bölümün başlığına ilerler. Son bölüm tamamlandığında bilgiler ve son beyan için soru-cevap alanı otomatik açılır. Okuma boyunca sabit kontrollerle duraklatılabilir, devam edilebilir veya durdurulabilir. Durdurma ve tek bölüm okumaya geçme otomatik geçişi iptal eder. “Kendim okuyacağım” veya Escape pencereyi kapatır; o anda kendiliğinden ses çalınmaz. Hareketi azaltma tercihi izlenir.
