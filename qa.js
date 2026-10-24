@@ -2,17 +2,20 @@
  'use strict';
  const $=id=>document.getElementById('qa-'+id);
  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ const V=window.OnamValidation;
+ const declaration='Onam formunu okudum, anladım, onaylıyorum';
  const questions=[
-  {key:'name',label:'Ad soyad',prompt:'Adınız ve soyadınız nedir? Deneme için hayali bir ad söyleyin.',validate:v=>v.trim().length>=3?'':'Lütfen en az üç karakterlik bir ad soyad girin.'},
-  {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Gün, ay ve yıl olarak söyleyebilirsiniz. Bu soruyu atlayabilirsiniz.',optional:true},
-  {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyebilirsiniz. Bu soruyu atlayabilirsiniz.',optional:true},
-  {key:'listened',label:'Formu dinleme / okuma beyanı',prompt:'Formun altı bölümünü dinlediniz veya okudunuz mu? Evet ya da hayır deyin.',binary:true},
-  {key:'understood',label:'Anlama beyanı',prompt:'Bilgileri anladınız mı, yoksa bir sağlık çalışanına soru sormak mı istiyorsunuz? Evet veya hayır deyin. Hayır cevabında sağlık ekibinden açıklama isteyin.',binary:true}
+  {key:'name',label:'Ad soyad',prompt:'Adınız ve soyadınız nedir? Deneme için hayali bir ad ve soyad söyleyin.',validate:v=>/^[\p{L}][\p{L}’' -]+\s[\p{L}’' -]+$/u.test(v)?'':'Ad ve soyadı birlikte girin.'},
+  {key:'tc',label:'T.C. kimlik numarası',prompt:'On bir haneli T.C. kimlik numaranız nedir? Rakamları tek tek söyleyin. Denemede gerçek kişisel bilgi kullanmayın.',clean:V.tc,error:'T.C. kimlik numarası on bir haneli olmalı ve kontrol basamakları geçerli olmalıdır. Bu kontrol kimliğinizi doğrulamaz.'},
+  {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Gün, ay ve dört haneli yıl olarak söyleyin veya yazın.',clean:V.birth,error:'Geçerli bir doğum tarihi girin. Örnek biçim: 15.06.1990. Gelecek tarih kabul edilmez.'},
+  {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.',clean:V.phone,error:'Geçerli bir Türkiye telefon numarası girin. Başında sıfırla on bir rakam olmalıdır.'},
+  {key:'dateTime',label:'Tarih ve saat',prompt:'Form için tarih ve saati kontrol edin. Cihazınızın yerel tarih ve saati önerildi. Değiştirebilir veya doğrulayabilirsiniz.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
+  {key:'declaration',label:'Son beyan',prompt:'Son beyanınız için şunu söyleyin veya yazın: Onam formunu okudum, anladım, onaylıyorum.',final:true}
  ];
  let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
- const yes=v=>['evet','doğru','evet doğru'].includes(normalize(v));
- const no=v=>['hayır','yanlış','hayır yanlış'].includes(normalize(v));
+ const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
+ const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  function say(message){window.onamAudio.stop();window.onamAudio.speak(message)}
@@ -20,24 +23,33 @@
   const confirm=phase==='confirm';
   $('confirm').hidden=!confirm;$('correct').hidden=!confirm;
   $('submit').hidden=confirm;$('answer').readOnly=confirm;
-  $('skip').hidden=confirm||!questions[step]?.optional;
+  $('confirm').textContent=questions[step]?.final?'Beyanımı tamamla':'Bilgilerim doğru';
   $('listen').disabled=!Recognition;
-  $('listen').textContent=confirm?'Mikrofonla evet / hayır de':'Mikrofonla cevap ver';
+  $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
-  phase='answer';candidate='';$('answer').value='';
+  phase='answer';candidate='';$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   $('question').textContent=`Soru ${step+1} / ${questions.length}: ${questions[step].prompt}`;
   $('status').textContent=Recognition?'Soruyu dinledikten sonra mikrofon düğmesine basın veya cevabınızı yazın.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
+  $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
   controls();$('question').focus();say(questions[step].prompt);
  }
  function submit(value){
   if(phase!=='answer')return;
   const q=questions[step];value=value.trim();
   if(!value){$('status').textContent='Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.';return}
-  if(q.binary){if(yes(value))value='Evet';else if(no(value)||['anlamadım','soru sormak istiyorum'].includes(normalize(value)))value='Hayır';else{$('status').textContent='Cevap net değil. Evet veya hayır deyin ya da yazın.';say($('status').textContent);return}}
-  if(q.validate&&q.validate(value)){$('status').textContent=q.validate(value);return}
+  if(q.final){
+   if(normalize(value)!==normalize(declaration)){
+    const refusal=/onaylamıyorum|kabul etmiyorum|anlamadım|hayır/.test(normalize(value));
+    $('status').textContent=refusal?'Onay vermediniz. Beyan tamamlanmadı.':'Beyan tamamlanmadı. Kabul ediyorsanız tam olarak şu cümleyi söyleyin: '+declaration;
+    say($('status').textContent);return;
+   }value=declaration;
+  }
+  if(q.clean){const cleaned=q.clean(value);if(!cleaned){$('status').textContent=q.error;say(q.error);return}value=cleaned}
+  if(q.validate&&q.validate(value)){$('status').textContent=q.validate(value);say($('status').textContent);return}
   candidate=value;$('answer').value=value;phase='confirm';controls();
-  const message=`${q.label} için cevabınız: ${value}. Doğru mu? Evet, doğru veya hayır, düzelteceğim diyebilirsiniz.`;
+  const spoken=['tc','phone'].includes(q.key)?V.spokenDigits(value):value;
+  const message=q.final?`Beyanınız: ${declaration}. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
   $('status').textContent=message;say(message);
  }
  function confirm(){
@@ -49,9 +61,10 @@
  function finish(){
   phase='done';window.onamAudio.stop();$('work').hidden=true;$('result').hidden=false;
   report={type:'demo-only',formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers,identityVerified:false,clinicalConsentRecorded:false};
-  const needsHelp=answers.listened?.value!=='Evet'||answers.understood?.value!=='Evet';
-  $('summary').textContent=questions.map(q=>`${q.label}: ${answers[q.key]?.value||'Atlandı'}`).join('\n')+'\n\n'+(needsHelp?'Sağlık çalışanından açıklama / yardım istenmeli.':'Deneme tamamlandı. Bu cevaplar tıbbi onam yerine geçmez.');
-  $('download').focus();say(needsHelp?'Deneme tamamlandı. Devam etmeden önce sağlık çalışanından açıklama veya yardım isteyin.':'Deneme tamamlandı. Cevaplarınız yalnızca bu sayfada tutuluyor.');
+  const complete=questions.every(q=>answers[q.key]?.value);
+  if(!complete)throw new Error('Zorunlu alan eksik');
+  $('summary').textContent=questions.map(q=>`${q.label}: ${answers[q.key].value}`).join('\n')+'\n\nSon beyan deneme özetine eklendi. Hastane kaydı veya hukuken geçerli imza oluşturulmadı.';
+  $('download').focus();say('Son beyanınız alındı. Deneme tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.');
  }
  function reset(){
   phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;step=0;
@@ -71,7 +84,7 @@
    resultReceived=true;const value=e.results?.[0]?.[0]?.transcript||'';
    // End recognition before playing the confirmation, preventing microphone echo.
    abortMic();
-   if(phase==='confirm'){if(yes(value))confirm();else if(no(value))correct();else{$('status').textContent='Onay anlaşılmadı. Evet, doğru veya hayır, düzelteceğim düğmesini kullanın.';say($('status').textContent)}}
+   if(phase==='confirm'){if(questions[step].final?normalize(value)===normalize(declaration):yes(value))confirm();else if(no(value))correct();else{$('status').textContent='Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.';say($('status').textContent)}}
    else{$('answer').value=value;submit(value)}
   };
   rec.onerror=e=>{
@@ -88,7 +101,6 @@
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?$('status').textContent:questions[step].prompt);
- $('skip').onclick=()=>{if(phase!=='answer'||!questions[step].optional)return;abortMic();step++;ask()};
  $('reset').onclick=reset;$('clear').onclick=reset;
  $('download').onclick=()=>{if(!report)return;const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='onam-deneme-ozeti.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
  window.addEventListener('pagehide',()=>{phase='idle';abortMic();answers={};report=null;candidate='';$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});

@@ -104,7 +104,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <h1>🔊 Onam Formu Sesli Okuyucu</h1>
   <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için sesli okuma prototipi.</p>
   <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
-  <p style="font-size:.85rem;margin-top:8px">Sürüm: Sesli soru–cevap 2</p>
+  <p style="font-size:.85rem;margin-top:8px">Sürüm: Zorunlu bilgiler ve son beyan · 3</p>
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -125,8 +125,9 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 
 <section class="panel">
   <h2>Ses ve okuma hızı</h2>
-  <label for="voice-select">Türkçe ses</label>
-  <select id="voice-select"><option value="">Cihazın Türkçe sesi</option></select>
+  <p id="natural-status" role="status">Doğal ses kontrol ediliyor…</p>
+  <label for="voice-select">Cevapları geri okuma ve yedek Türkçe ses</label>
+  <select id="voice-select"><option value="">Önerilen Türkçe ses</option></select>
   <p class="muted" id="voice-status" role="status"></p>
   <p class="muted">Size uygun hızı seçin. Varsayılan hız 1× değeridir. Ses ve hız değişiklikleri bir sonraki cümlede uygulanır.</p>
   <div class="speed-list" role="group" aria-label="Okuma hızı">
@@ -146,28 +147,28 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 
 <section class="panel" id="qa-panel" aria-labelledby="qa-heading">
   <h2 id="qa-heading">Sesli soru–cevap denemesi</h2>
-  <p>Deneme bilgileri kullanın. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Bilgiler yalnızca bu açık sayfada tutulur, hastaneye gönderilmez. Sayfa yenilendiğinde silinir.</p>
+  <p>Ad-soyad, T.C. kimlik numarası, doğum tarihi, telefon ve tarih-saat zorunludur; soru atlanamaz. Deneme bilgileri kullanın. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Bilgiler yalnızca bu açık sayfada tutulur, hastaneye gönderilmez. Sayfa yenilendiğinde silinir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. Gerçek hasta bilgisi kullanmayın.</p>
   <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
   <div id="qa-work" hidden>
     <h3 id="qa-question" tabindex="-1"></h3>
     <p id="qa-status" role="status" aria-live="polite"></p>
     <label for="qa-answer">Cevabınız</label>
-    <input id="qa-answer" autocomplete="off" maxlength="150" aria-describedby="qa-status">
+    <input id="qa-answer" autocomplete="off" required maxlength="150" aria-describedby="qa-status">
     <div id="qa-actions">
       <button class="secondary" id="qa-listen">Mikrofonla cevap ver</button>
       <button class="plain" id="qa-repeat">Soruyu tekrar dinle</button>
       <button class="secondary" id="qa-submit">Cevabımı kontrol et</button>
-      <button class="secondary" id="qa-confirm" hidden>Evet, doğru</button>
-      <button class="plain" id="qa-correct" hidden>Hayır, düzelteceğim</button>
-      <button class="plain" id="qa-skip" hidden>Bu soruyu atla</button>
+      <button class="secondary" id="qa-confirm" hidden>Bilgilerim doğru</button>
+      <button class="plain" id="qa-correct" hidden>Düzelteceğim</button>
+
       <button class="plain" id="qa-reset">Durdur ve bilgileri sil</button>
     </div>
   </div>
   <div id="qa-result" hidden>
     <h3>Deneme cevapları</h3>
     <p id="qa-summary"></p>
-    <p>Bu özet hastane kaydı, kimlik doğrulaması veya imza yerine geçmez. Dinledim / anladım beyanı ayrı gösterilir; işlem ve kontrast madde onamı alınmaz.</p>
+    <p>Bu özet hastane kaydı, kimlik doğrulaması veya imza yerine geçmez. Son beyan “Onam formunu okudum, anladım, onaylıyorum” olarak gösterilir. Bu deneme elektronik imza veya hastane onam kaydı oluşturmaz.</p>
     <button class="secondary" id="qa-download">Deneme özetini indir (JSON)</button>
     <button class="plain" id="qa-clear">Bilgileri sil</button>
   </div>
@@ -178,6 +179,8 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Sesli soru–cevap bölümü bir denemedir; kimlik doğrulaması, imza veya hastane kaydı oluşturmaz.</p>
 </section>
 </main>
+<script src="speech-text.js?v=3"></script>
+<script src="natural-audio.js?v=3"></script>
 <script>
 (() => {
  const data = [
@@ -226,28 +229,23 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   const pct=Math.round(((index+(isReading?0.5:0))/data.length)*100);
   progress.value=Math.min(100,pct);progressLabel.textContent=Math.min(100,pct)+'%';
  }
- function prepareSpeech(str){
-  return str.replace(/^\d+\.\s*/, '')
-   .replace(/%0,01[–-]0,1/g,'yüzde sıfır virgül sıfır bir ile yüzde sıfır virgül bir arasında')
-   .replace(/%5[–-]10/g,'yüzde beş ile yüzde on arasında')
-   .replace(/%0,01/g,'yüzde sıfır virgül sıfır bir')
-   .replace(/4[–-]6/g,'dört ile altı')
-   .replace(/\bMR\b/g,'emar').replace(/\bBT\b/g,'bilgisayarlı tomografi')
-   .replace(/X-ışınları/g,'iks ışınları').replace(/vb\./g,'ve benzeri')
-   .replace(/\(([^)]*)\)/g,', $1,').replace(/\s*\/\s*/g,' veya ');
- }
+
  const voiceSelect=document.getElementById('voice-select');
  function loadVoices(){
   if(!('speechSynthesis' in window))return;
   const previous=voiceSelect.value;
   const voices=window.speechSynthesis.getVoices().filter(v=>/^tr(?:-|$|_)/i.test(v.lang));
-  voiceSelect.replaceChildren(new Option('Cihazın Türkçe sesi',''));
+  voiceSelect.replaceChildren(new Option('Önerilen Türkçe ses',''));
   voices.forEach(v=>voiceSelect.add(new Option(v.name+(v.localService?' · cihaz sesi':' · çevrimiçi'),v.voiceURI)));
   if([...voiceSelect.options].some(o=>o.value===previous))voiceSelect.value=previous;
-  document.getElementById('voice-status').textContent=voices.length?'Sesler cihazınıza göre değişir. En anlaşılır sesi buradan deneyebilirsiniz.':'Henüz Türkçe ses bulunamadı. Cihazın metin okuma ayarlarından Türkçe ses yükleyebilirsiniz.';
+  document.getElementById('voice-status').textContent=voices.length?'Bu sesler cihazınıza göre değişir. En anlaşılır sesi buradan deneyebilirsiniz.':'Henüz Türkçe ses bulunamadı. Cihazın metin okuma ayarlarından Türkçe ses yükleyebilirsiniz.';
  }
  if('speechSynthesis' in window){window.speechSynthesis.addEventListener('voiceschanged',loadVoices);loadVoices()}
  function speakText(str,onend,formReading=true){
+  if(window.onamNatural?.play(str,{rate,start:()=>{isReading=true;if(formReading)updateCurrent(index)},done:onend,fallback:()=>speakDevice(str,onend,formReading)}))return;
+  speakDevice(str,onend,formReading);
+ }
+ function speakDevice(str,onend,formReading=true){
   if(!('speechSynthesis' in window)){isReading=false;text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
   const session=speechSession;
   const sentences=prepareSpeech(str).match(/[^.!?\n]+[.!?]?/g)||[];
@@ -267,7 +265,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
    u.lang='tr-TR';u.rate=rate;
    const voices=window.speechSynthesis.getVoices();
    const turkish=voices.filter(v=>/^tr(?:-|_)/i.test(v.lang)||v.lang.toLowerCase()==='tr');
-   const voice=turkish.find(v=>v.voiceURI===voiceSelect.value)||turkish.find(v=>v.default)||turkish.find(v=>v.localService)||turkish[0];
+   const voice=turkish.find(v=>v.voiceURI===voiceSelect.value)||turkish.find(v=>/google|natural|neural|online/i.test(v.name))||turkish.find(v=>v.default)||turkish[0];
    if(voice)u.voice=voice;
    u.onstart=()=>{if(session===speechSession){isReading=true;if(formReading)updateCurrent(index)}};
    u.onend=speakNext;
@@ -285,18 +283,19 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   const originalIndex=data.length-queue.length+queuePos;updateCurrent(originalIndex);
   speakText(queue[queuePos].title+'. '+queue[queuePos].text,()=>{queuePos++;playNext()});
  }
- function stopAll(){window.dispatchEvent(new Event('onam-stop'));speechSession++;activeUtterance=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
+ function stopAll(){window.onamNatural?.stop();window.dispatchEvent(new Event('onam-stop'));speechSession++;activeUtterance=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();isReading=false;queue=[];queuePos=0}
  document.getElementById('play').addEventListener('click',()=>readAll(0));
  document.getElementById('stop').addEventListener('click',()=>{stopAll();text.textContent='Okuma durduruldu.'});
- document.getElementById('pause').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
- document.getElementById('resume').addEventListener('click',()=>{if('speechSynthesis'in window&&window.speechSynthesis.paused){window.speechSynthesis.resume();text.textContent='Okumaya devam ediliyor.'}});
+ document.getElementById('pause').addEventListener('click',()=>{window.onamNatural?.pause();if('speechSynthesis'in window&&window.speechSynthesis.speaking)window.speechSynthesis.pause();text.textContent='Okuma duraklatıldı.'});
+ document.getElementById('resume').addEventListener('click',()=>{window.onamNatural?.resume();if('speechSynthesis'in window&&window.speechSynthesis.paused){window.speechSynthesis.resume();text.textContent='Okumaya devam ediliyor.'}});
  document.getElementById('previous').addEventListener('click',()=>readOne(Math.max(0,index-1)));
  document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
- document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
+ document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);window.onamNatural?.setRate(rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
  window.onamAudio={stop:stopAll,speak:(message,done)=>speakText(message,done,false)};
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="qa.js?v=2"></script>
+<script src="validation.js?v=3"></script>
+<script src="qa.js?v=3"></script>
 </body>
 </html>
