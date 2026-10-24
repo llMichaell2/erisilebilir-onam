@@ -23,7 +23,7 @@ const root=path.resolve(__dirname,'..');
     window.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
     const tr={lang:'tr-TR',voiceURI:'turkish',name:'Türkçe',localService:true};
     Object.defineProperty(window,'speechSynthesis',{value:{speaking:false,paused:false,getVoices(){return [{lang:'en-US',name:'English'},tr]},addEventListener(){},cancel(){this.speaking=false},resume(){this.paused=false},pause(){this.paused=true},speak(u){window.lastUtterance=u;spoken.push({text:u.text,rate:u.rate,lang:u.lang,voice:u.voice?.lang});this.speaking=true;u.onstart?.()}}});
-    if(recognition){window.SpeechRecognition=class{start(){window.mic=this;this.history=[];const handler=this.onresult;this.onresult=e=>{this.onspeechstart?.();this.history.push(...Array.from(e.results,r=>Object.assign(Array.from(r),{isFinal:r.isFinal??true})));handler({...e,results:this.history})};this.onstart?.()}abort(){this.onend?.()}}}else{window.SpeechRecognition=undefined;window.webkitSpeechRecognition=undefined}
+    if(recognition){window.SpeechRecognition=class{start(){window.mic=this;this.onstart?.()}abort(){this.onend?.()}}}else{window.SpeechRecognition=undefined;window.webkitSpeechRecognition=undefined}
    },{recognition});
    await page.goto('https://onam.test/');
    return page;
