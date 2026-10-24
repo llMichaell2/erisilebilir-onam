@@ -7,6 +7,9 @@ import sys
 async def main():
     try:
         import edge_tts
+        import edge_tts.communicate as communicate
+        # Add the operating system trust store while retaining certificate verification.
+        communicate._SSL_CTX.load_default_certs()
         output = Path(sys.argv[1])
         temporary = output.with_suffix('.part')
         try:
