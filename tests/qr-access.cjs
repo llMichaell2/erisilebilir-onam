@@ -1,0 +1,23 @@
+const {PGlite}=require('@electric-sql/pglite');const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema public to anon,authenticated;`);const root=path.resolve(__dirname,'..');await db.exec(fs.readFileSync(root+'/database/setup.sql','utf8'));
+ const answers=Object.fromEntries(Object.entries({name:'Örnek Kişi',tc:'10000000146',birthDate:'07.06.2005',phone:'05381234567',dateTime:'24.10.2026 14:30',declaration:'Onam formunu okudum, anladım, onaylıyorum'}).map(([k,v])=>[k,{value:v}]));
+ const legacy=(await db.query("select public.submit_consent('00000000-0000-4000-8000-000000000001','bt-mr-photo-v1',$1::jsonb) as id",[JSON.stringify(answers)])).rows[0].id;
+ await db.exec(fs.readFileSync(root+'/database/qr-access.sql','utf8'));await db.exec(fs.readFileSync(root+'/database/qr-access.sql','utf8'));assert.equal((await db.query('select count(*)::int as n from public.consent_records')).rows[0].n,1);
+ const staff=(await db.query('select public.rotate_onam_staff_key() as key')).rows[0].key;assert.match(staff,/^[a-f0-9]{64}$/);
+ await db.exec('set role anon');
+ await assert.rejects(db.query("select public.submit_consent('00000000-0000-4000-8000-000000000002','bt-mr-photo-v1',$1::jsonb)",[JSON.stringify(answers)]),/permission denied/);
+ const key='a'.repeat(64),wrong='b'.repeat(64),second='c'.repeat(64);
+ async function submit(a=answers,k=key){return (await db.query("select public.submit_consent('00000000-0000-4000-8000-000000000002','bt-mr-photo-v1',$1::jsonb,$2) as id",[JSON.stringify(a),k])).rows[0].id}
+ const id=await submit();assert.equal(await submit(),id);await assert.rejects(submit(answers,second),/Submission conflict/);
+ const read=async k=>(await db.query('select public.get_consent_by_token($1) as record',[k])).rows[0].record;
+ assert.equal(await read(wrong),null);assert.equal(await read(id),null);assert.equal(await read(null),null);const record=await read(key);assert.equal(record.id,id);assert.equal(record.answers.name.value,'Örnek Kişi');assert.equal(record.form_snapshot.length,6);assert.equal(record.access_token_hash,undefined);
+ for(const table of ['consent_records','onam_receipts','onam_settings'])await assert.rejects(db.query('select * from public.'+table),/permission denied/);
+ await assert.rejects(db.query('select public.rotate_onam_staff_key()'),/permission denied/);
+ const list=async k=>(await db.query('select public.list_onam_receipts($1) as result',[k])).rows[0].result;
+ assert.equal(await list(key),null);assert.equal(await list(wrong),null);const inbox=await list(staff);assert.equal(inbox.records.length,1);assert.equal(inbox.records[0].patient_name,'Örnek Kişi');assert.equal(inbox.records[0].access_token,key);
+ await db.exec('reset role');const hash=(await db.query('select access_token_hash from public.consent_records where id=$1',[id])).rows[0].access_token_hash;assert.notEqual(hash,key);
+ await db.query('update public.consent_records set access_revoked_at=now() where id=$1',[id]);await db.exec('set role anon');assert.equal(await read(key),null);assert.equal((await list(staff)).records[0].access_token,null);
+ await db.exec('reset role');const rotated=(await db.query('select public.rotate_onam_staff_key() as key')).rows[0].key;assert.notEqual(rotated,staff);await db.exec('set role anon');assert.equal(await list(staff),null);assert.equal((await list(rotated)).records.length,1);
+ await db.exec('reset role');assert.equal((await db.query('select id from public.consent_records where id=$1',[legacy])).rows.length,1);
+ console.log('PASS: additive migration preserves existing records; token-scoped anonymous read; no public tables/list; per-patient QR and private named inbox; idempotency; revoked QR and rotated staff key deny access');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exit(1)});

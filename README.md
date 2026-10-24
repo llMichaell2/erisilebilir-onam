@@ -1,35 +1,36 @@
 # Erişilebilir onam formu
 
-Türkçe BT/MR formunu seslendiren, cevapları geri okuyup doğrulatan ve son hasta beyanını alan web uygulaması. Arayüz GitHub Pages üzerinde çalışır. Kalıcı kayıt ve doktor erişimi için ayrıca Supabase bağlantısı gerekir.
+Türkçe BT/MR formunu seslendiren, cevapları geri okuyup doğrulatan ve son hasta beyanını alan web uygulaması. Arayüz GitHub Pages üzerinde çalışır. Kalıcı kayıt ve QR erişimi için ayrıca Supabase bağlantısı gerekir.
 
 ## Çalıştırma
 
 Depo kökünde `python3 -m http.server 8000` çalıştırın. HTTPS yayını mikrofon için uygundur; desteklenmeyen veya izin verilmeyen mikrofon yerine yazılı cevap kullanılabilir.
 
-## Hasta ve doktor akışı
+## Hasta, sekreter ve doktor akışı
 
 Hasta altı bölümü dinler. Ad-soyad, T.C. numarası, doğum tarihi, telefon ve tarih-saat zorunludur. Cevaplar geri okunur ve kullanıcı doğrulamadan ilerlenmez. Son adımda “Onam formunu okudum, anladım, onaylıyorum” cümlesi gerekir; “evet” veya olumsuz cevap tamamlamaz.
 
-Bağlantı yapılandırılmışsa son beyanın ardından kayıt gönderilir. Başarılı kayıt cevabından sonra doktor bağlantısı ve QR oluşturulur. QR yalnızca rastgele kayıt numarası içerir. Doktor telefon kamerasıyla QR’ı açar, giriş yapar ve formu okur. Kayıtlar doktor ekranında ayrıca listelenir. Yetkisi olmayan bir kullanıcı, kayıt numarasını bilse bile verileri okuyamaz.
+Bağlantı yapılandırılmışsa son beyanın ardından kayıt gönderilir. Başarılı kayıt cevabından sonra bağlantı ve QR oluşturulur. Hasta QR’ı PNG olarak telefonuna indirebilir. QR kişisel bilgileri açık metin içermez; formu açan rastgele 256 bit erişim anahtarı içerir. QR’ın veya bağlantının kopyasını alan herkes o formu okuyabilir. Anahtar URL’nin `#` bölümünde tutulur; form sunucusuna POST ile gönderilir. Bir kaydın QR’ı toplu kayıt listesini açamaz.
 
-Bağlantı yoksa veya kayıt başarısızsa QR gösterilmez; sonuç ekranı bunu açıkça belirtir. Kullanıcı açık sayfadaki özeti indirebilir. Aynı kayıt isteğinin yeniden gönderilmesi ikinci kayıt oluşturmaz. “Ekranı temizle” yalnızca açık ekranı temizler; daha önce sunucuya kaydedilmiş formu silmez.
+Sekreter özel yönetim bağlantısıyla ad-soyad ve QR listesini açar. Ekran 15 saniyede bir yenilenir ve son 100 kaydı gösterir. Her hasta için aynı QR indirilebilir veya ad-soyad ile QR etiketi yazdırılabilir. Doktor hastanın belgesine yapıştırılan QR’ı okutup doldurulan bilgileri, son beyanı ve onaylanan form metnini görür; ayrıca doktor hesabı açılması gerekmez.
+
+Bağlantı yoksa veya kayıt başarısızsa QR gösterilmez; sonuç ekranı bunu belirtir. Aynı kayıt isteğinin aynı anahtarla yeniden gönderilmesi ikinci kayıt oluşturmaz. “Ekranı temizle” yalnızca açık ekranı temizler; sunucudaki formu silmez.
 
 ## Ücretsiz kayıt bağlantısını açma
 
-Hesap sahibinin bir kez yapacağı işlemler:
-
 1. Supabase üzerinde ücretsiz bir proje oluşturun. Veritabanı şifresini güvenli hesap ayarlarında saklayın; sohbete veya GitHub’a yazmayın.
-2. Projenin SQL Editor ekranında [database/setup.sql](database/setup.sql) dosyasının tamamını çalıştırın. Bu, tabloları ve erişim kurallarını oluşturur. Scripti kaynak form değişmedikçe tekrar çalıştırmak verileri silmez. Yayımlanan bir form metnini değiştirmek için yeni form sürümü oluşturun; eski kayıtların metinlerini değiştirmeyin.
-3. Authentication → Users bölümünde doktor hesabını oluşturun. Kullanıcı kendi kendine doktor olamaz. Hesabı yetkilendirmek için SQL Editor’da şu sorguyu, kendi doktor hesabınızın e-postasıyla çalıştırın:
+2. SQL Editor’da önce [database/setup.sql](database/setup.sql), ardından [database/qr-access.sql](database/qr-access.sql) dosyasının tamamını çalıştırın. İlk dosyayı zaten çalıştırdıysanız yalnızca QR güncellemesi yeterlidir. QR güncellemesi mevcut kayıtları silmez. Önceden oluşturulmuş anahtarsız kayıtlar otomatik olarak herkese açılmaz.
+3. Yönetim ekranı anahtarını oluşturmak için SQL Editor’da şu sorguyu çalıştırın:
 
    ```sql
-   insert into public.onam_doctors(user_id)
-   select id from auth.users where email = 'doktor-hesabinin-epostasi'
-   on conflict do nothing;
+   select public.rotate_onam_staff_key() as yonetim_anahtari;
    ```
 
-4. `config.js` dosyasındaki `supabaseUrl` ve `supabaseKey` alanlarını projenin Project URL ve **publishable / anon public** anahtarıyla doldurun. Bunlar tarayıcıya açık bağlantı bilgileridir. **Service-role / secret anahtarı veya veritabanı şifresi kesinlikle kullanılmaz.** Erişim yetkisi anahtarın gizli tutulmasına değil SQL erişim kurallarına dayanır.
-5. `config.js` değişikliğini GitHub’a gönderin. Hasta formunu bir tamamlayın; sonrasında QR’ı başka cihazda açıp doktor hesabıyla giriş yapın. Yetkisiz bir hesapla verilerin görüntülenmediğini ayrıca kontrol edin.
+   Çıkan anahtarı güvenli tutun; sohbete veya GitHub’a yazmayın. `doctor.html` ekranındaki yönetim anahtarı alanına yapıştırın. Ekran açıldıktan sonra “Yönetim bağlantısını kopyala” düğmesiyle yalnızca yetkili personelin kullanacağı bağlantıyı saklayın. Bu anahtar hasta QR’ından farklıdır. Sorguyu yeniden çalıştırmak eski yönetim bağlantısını geçersiz kılar; hasta QR’larını değiştirmez.
+4. `config.js` dosyasındaki `supabaseUrl` ve `supabaseKey` alanlarını projenin Project URL ve **publishable / anon public** anahtarıyla doldurun. Bunlar tarayıcıya açık bağlantı bilgileridir. **Service-role / secret anahtarı veya veritabanı şifresi kesinlikle kullanılmaz.**
+5. `config.js` değişikliğini GitHub’a gönderin. Hasta formunu tamamlayın; QR’ı indirin, başka cihazda açın ve sekreter listesinde aynı ad-soyad ile aynı QR’ın göründüğünü kontrol edin.
+
+Form erişimini kapatmak gerekirse yönetici Supabase Table Editor’da ilgili `consent_records` satırındaki `access_revoked_at` alanına tarih-saat girer. Bu QR artık açılmaz. Ham QR anahtarları, sekreterin etiketi yeniden üretebilmesi için yalnızca erişimi kapalı `onam_receipts` tablosunda tutulur. Form araması SHA-256 özetinden yapılır; hasta veya personel tabloları doğrudan listeleyemez. Personel de yalnızca özel yönetim anahtarıyla kayıt kutusuna erişir.
 
 Bu depo proje hesabı oluşturmaz veya bulut veritabanına kendiliğinden SQL uygulamaz. Bağlantı ve canlı sunucu kontrolleri tamamlanmadan kalıcı kayıt hazır sayılmaz. Bir hasta beyanı saklamak, resmi kimlik doğrulaması, elektronik imza veya hastane bilgi sistemi entegrasyonu değildir.
 
@@ -66,8 +67,9 @@ Kayıt ve veritabanı kontrollerinin ek bağımlılıkları checkout dışında 
 npm install --prefix /tmp/onam-db-test --cache /tmp/onam-npm-cache @electric-sql/pglite jsqr
 NODE_PATH="/tmp/onam-db-test/node_modules${NODE_PATH:+:$NODE_PATH}" node tests/database.cjs
 NODE_PATH="/tmp/onam-db-test/node_modules${NODE_PATH:+:$NODE_PATH}" node tests/records-browser.cjs
+NODE_PATH="/tmp/onam-db-test/node_modules${NODE_PATH:+:$NODE_PATH}" node tests/qr-access.cjs
 ```
 
-Veritabanı testi gerçek PostgreSQL motorunda SQL ve satır erişim kurallarını sınar; Supabase `auth.uid()` bağlamını yerelde sağlar. Tarayıcı kayıt testi, bulut HTTP yanıtlarını taklit ederek hata/yeniden deneme, gerçek QR çözümleme, doktor girişi ve görünür verilerin temizlenmesini kontrol eder. Bunlar henüz kurulmamış gerçek Supabase projesini doğrulamaz. Ses/mikrofon taklitleri de gerçek cihazdaki ses kalitesinin ve konuşma tanıma bağlantısının yerine geçmez.
+Veritabanı testi gerçek PostgreSQL motorunda SQL ve satır erişim kurallarını sınar; Supabase `auth.uid()` bağlamını yerelde sağlar. Tarayıcı kayıt testi, bulut HTTP yanıtlarını taklit ederek hata/yeniden deneme, gerçek QR çözümleme, QR ile tek form erişimi, özel sekreter listesi, PNG indirme, etiket yazdırma ve görünür verilerin temizlenmesini kontrol eder. Bunlar henüz kurulmamış gerçek Supabase projesini doğrulamaz. Ses/mikrofon taklitleri de gerçek cihazdaki ses kalitesinin ve konuşma tanıma bağlantısının yerine geçmez.
 
 QR üreticisi MIT lisanslı `qrcode-generator` paketinden `vendor/` altında saklanmıştır. QR üretiminde dış bir resim veya QR servisi kullanılmaz.

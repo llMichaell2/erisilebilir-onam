@@ -1,32 +1,20 @@
 (() => {
- const $=id=>document.getElementById(id);const api=window.OnamRecords;let token=null,generation=0;
- const labels={name:'Ad soyad',tc:'T.C. kimlik numarası',birthDate:'Doğum tarihi',phone:'Telefon',dateTime:'Tarih / saat',declaration:'Hasta beyanı'};
- const idFromUrl=()=>new URLSearchParams(location.hash.slice(1)).get('record');
- const status=message=>$('doctor-status').textContent=message;
- function clear(){generation++;$('record-panel').hidden=true;$('records-panel').hidden=true;$('record-details').replaceChildren();$('record-form').replaceChildren();$('records-list').replaceChildren()}
- async function showRecord(){
-  if(!token)return;const id=idFromUrl();if(!id)return;
-  const current=++generation;$('record-panel').hidden=true;$('record-details').replaceChildren();$('record-form').replaceChildren();status('Form yükleniyor…');
-  try{const record=await api.get(id,token);if(current!==generation)return;
-   for(const [key,label] of Object.entries(labels)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=record.answers[key]?.value||'—';$('record-details').append(dt,dd)}
-   for(const [label,value] of [['Kayıt zamanı',new Date(record.created_at).toLocaleString('tr-TR')],['Form sürümü',record.form_version],['Kayıt numarası',record.id]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;$('record-details').append(dt,dd)}
-   for(const section of record.form_snapshot){const h=document.createElement('h3'),p=document.createElement('p');h.textContent=section.title;p.textContent=section.text;p.className='form-text';$('record-form').append(h,p)}
-   $('record-panel').hidden=false;status('Form açıldı.');
-  }catch(error){if(current===generation)status(error.message)}
+ const $=id=>document.getElementById(id);const api=window.OnamRecords;let key=null,generation=0,timer=null,busy=false;
+ function status(text){$('status').textContent=text}
+ function close(){generation++;key=null;busy=false;clearInterval(timer);timer=null;$('record-list').replaceChildren();$('login').hidden=false;$('toolbar').hidden=true;$('list-title').hidden=true;$('staff-key').value='';history.replaceState(null,'',location.pathname)}
+ function render(records){
+  $('record-list').replaceChildren();
+  for(const record of records){const article=document.createElement('article');const title=document.createElement('h3');title.className='patient-name';title.textContent=record.patient_name;const time=document.createElement('p');time.className='time';time.textContent=new Date(record.created_at).toLocaleString('tr-TR');article.append(title,time);
+   if(api.isKey(record.access_token)){const url=api.recordUrl(record.access_token);const qr=document.createElement('div');qr.className='qr';qr.setAttribute('role','img');qr.setAttribute('aria-label',record.patient_name+' onam formu QR kodu');window.OnamQR.render(qr,url);const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Onaylanan formu aç';const download=document.createElement('button');download.textContent='QR indir';download.onclick=()=>window.OnamQR.download(qr).catch(()=>status('QR indirilemedi.'));const print=document.createElement('button');print.textContent='Ad-soyad ve QR etiketi yazdır';print.onclick=()=>{document.querySelectorAll('.print-target').forEach(el=>el.classList.remove('print-target'));article.classList.add('print-target');window.print()};article.append(qr,link,document.createElement('br'),download,print)}else{const p=document.createElement('p');p.textContent='Bu QR bağlantısının erişimi kapatılmış.';article.append(p)}
+   $('record-list').append(article);
+  }
  }
- async function list(){
-  if(!token)return;const current=generation;
-  try{const rows=await api.list(token);if(current!==generation)return;$('records-list').replaceChildren();
-   for(const row of rows){const a=document.createElement('a');a.href='#record='+row.id;a.textContent=new Date(row.created_at).toLocaleString('tr-TR')+' · '+row.form_version;a.onclick=()=>{if(idFromUrl()===row.id)showRecord()};$('records-list').append(a)}
-   if(!rows.length)$('records-list').textContent='Görüntülenebilen kayıt yok. Doktor yetkisini kontrol edin.';
-   $('records-panel').hidden=false;
-  }catch(error){if(current===generation)status(error.message)}
+ async function refresh(){if(!key||busy)return;busy=true;const current=generation;const active=key;
+  try{const records=await api.listByStaffKey(active);if(current!==generation)return;render(records);$('login').hidden=true;$('toolbar').hidden=false;$('list-title').hidden=false;status(records.length?'Kayıt listesi güncel.':'Henüz onaylanan form yok.')}catch(error){if(current!==generation)return;close();status(error.message)}finally{if(current===generation)busy=false}
  }
- $('login-form').onsubmit=async event=>{event.preventDefault();$('login-button').disabled=true;const requestGeneration=generation;const email=$('email').value,password=$('password').value;$('password').value='';status('Giriş yapılıyor…');
-  try{const access=await api.login(email,password);if(requestGeneration!==generation)return;token=access;$('login').hidden=true;$('toolbar').hidden=false;status('Giriş yapıldı.');await list();await showRecord()}catch(error){token=null;clear();status(error.message)}finally{$('login-button').disabled=false}
- };
- $('logout').onclick=()=>{const old=token;token=null;clear();$('toolbar').hidden=true;$('login').hidden=false;$('email').value='';status('Çıkış yapıldı.');if(old)api.logout(old).catch(()=>{})};
- $('refresh-records').onclick=async()=>{await list();await showRecord()};$('print-record').onclick=()=>window.print();window.addEventListener('hashchange',showRecord);
- window.addEventListener('pagehide',()=>{token=null;clear();$('password').value='';$('login').hidden=false;$('toolbar').hidden=true});
- status(api.configured?(idFromUrl()?'QR kaydını açmak için doktor hesabınızla giriş yapın.':'Doktor hesabınızla giriş yapın.'):'Kayıt bağlantısı henüz ayarlanmadı.');
+ async function open(value){close();if(!api.isKey(value)){status('Yönetim anahtarı geçersiz.');return}key=value;history.replaceState(null,'',api.staffUrl(value));status('Kayıtlar yükleniyor…');await refresh();if(key)timer=setInterval(refresh,15000)}
+ $('login-form').onsubmit=event=>{event.preventDefault();const value=$('staff-key').value.trim();$('staff-key').value='';open(value)};
+ $('refresh').onclick=refresh;$('logout').onclick=()=>{close();status('Ekran kapatıldı.')};$('copy-link').onclick=async()=>{if(!key)return;try{await navigator.clipboard.writeText(api.staffUrl(key));status('Yönetim bağlantısı kopyalandı. Yalnızca yetkili personelle paylaşın.')}catch{status('Bağlantıyı tarayıcının adres çubuğundan kopyalayabilirsiniz.')}};
+ const initial=new URLSearchParams(location.hash.slice(1)).get('key');if(initial)open(initial);else status(api.configured?'Özel yönetim bağlantınızla giriş yapın.':'Kayıt bağlantısı henüz ayarlanmadı.');
+ window.addEventListener('hashchange',()=>{const value=new URLSearchParams(location.hash.slice(1)).get('key');if(value&&value!==key)open(value)});window.addEventListener('pagehide',close);
 })();

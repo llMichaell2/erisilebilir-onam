@@ -3,7 +3,7 @@
  let clips={},audio=null,session=0,playbackRate=1,objectUrl=null,paused=false;
  const status=message=>{const el=document.getElementById('natural-status');if(el)el.textContent=message};
  window.addEventListener('DOMContentLoaded',async()=>{
-  try{const r=await fetch('audio/manifest.json?v=8');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
+  try{const r=await fetch('audio/manifest.json?v=9');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
  });
  function releaseUrl(){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}}
  function stop(){session++;paused=false;if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}releaseUrl()}

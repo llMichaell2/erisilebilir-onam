@@ -105,7 +105,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <h1>🔊 Onam Formu Sesli Okuyucu</h1>
   <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için erişilebilir onam formu.</p>
   <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
-  <p style="font-size:.85rem;margin-top:8px">Sürüm: Form kaydı ve doktor QR erişimi · 8</p>
+  <p style="font-size:.85rem;margin-top:8px">Sürüm: İndirilebilir QR ve kayıt listesi · 9</p>
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -172,10 +172,11 @@ button:disabled{opacity:.55;cursor:default;transform:none}
     <p id="qa-save-status" role="status" aria-live="polite"></p>
     <button class="secondary" id="qa-save-retry" hidden>Kaydetmeyi tekrar dene</button>
     <div id="qa-receipt" hidden>
-      <h3>Doktor erişim QR kodu</h3>
+      <h3>Form erişim QR kodu</h3>
       <div id="qa-qr" role="img" aria-label="Onaylanan formu doktor ekranında açan QR kod"></div>
-      <p><a id="qa-record-link">Formu doktor ekranında aç</a></p>
-      <p>Bu QR kişisel bilgilerinizi içermez. Kayıt, yetkili doktor girişiyle açılır.</p>
+      <button class="secondary" id="qa-qr-download">QR kodunu telefonuma indir</button>
+      <p><a id="qa-record-link">Onaylanan formu aç</a></p>
+      <p>QR’ın veya bağlantının kopyasına sahip olan herkes bu formdaki kişisel bilgileri görebilir. QR’ı yalnızca ilgili sağlık çalışanıyla paylaşın.</p>
     </div>
     <button class="secondary" id="qa-download">Form özetini indir (JSON)</button>
     <button class="plain" id="qa-clear">Ekranı temizle</button>
@@ -184,12 +185,12 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 
 <section class="panel">
   <h2>Önemli bilgi</h2>
-  <p class="notice">Form metni paylaşılan belgeden aktarılmıştır. Sesli beyan, resmi kimlik doğrulaması veya elektronik imza değildir. <a href="doctor.html">Doktor girişi</a></p>
+  <p class="notice">Form metni paylaşılan belgeden aktarılmıştır. Sesli beyan, resmi kimlik doğrulaması veya elektronik imza değildir. <a href="doctor.html">Sekreter / kayıt ekranı</a></p>
 </section>
 </main>
-<script src="speech-text.js?v=8"></script>
-<script src="audio-join.js?v=8"></script>
-<script src="natural-audio.js?v=8"></script>
+<script src="speech-text.js?v=9"></script>
+<script src="audio-join.js?v=9"></script>
+<script src="natural-audio.js?v=9"></script>
 <script>
 (() => {
  const data = [
@@ -305,10 +306,11 @@ button:disabled{opacity:.55;cursor:default;transform:none}
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="validation.js?v=8"></script>
-<script src="config.js?v=8"></script>
-<script src="records.js?v=8"></script>
+<script src="validation.js?v=9"></script>
+<script src="config.js?v=9"></script>
+<script src="records.js?v=9"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="qa.js?v=8"></script>
+<script src="qr-ui.js?v=9"></script>
+<script src="qa.js?v=9"></script>
 </body>
 </html>

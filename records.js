@@ -12,12 +12,13 @@
   if(!response.ok){if(response.status===401||response.status===403)throw Error('Giriş veya erişim yetkisi doğrulanamadı.');throw Error('İşlem tamamlanamadı. Bilgileri ve kayıt bağlantısını kontrol edin.')}
   if(response.status===204)return null;return response.json();
  }
- window.OnamRecords={configured,isId:value=>uuid.test(value),
-  async submit(report){const id=await request('/rest/v1/rpc/submit_consent',{method:'POST',body:{p_submission_id:report.submissionId,p_form_version:report.formVersion,p_answers:report.answers}});if(typeof id!=='string'||!uuid.test(id))throw Error('Kayıt servisi geçerli bir kayıt numarası döndürmedi.');return id},
-  doctorUrl(id){if(!uuid.test(id))throw Error('Kayıt numarası geçersiz');const url=new URL('doctor.html',location.href);url.hash='record='+id;return url.href},
-  async login(email,password){const session=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});if(!session.access_token)throw Error('Giriş tamamlanamadı');return session.access_token},
-  list:token=>request('/rest/v1/consent_records?select=id,created_at,form_version&order=created_at.desc&limit=50',{token}),
-  async get(id,token){if(!uuid.test(id))throw Error('Kayıt numarası geçersiz');const rows=await request('/rest/v1/consent_records?id=eq.'+id+'&select=id,created_at,form_version,answers,form_snapshot',{token});if(!Array.isArray(rows)||rows.length!==1)throw Error('Kayıt bulunamadı veya bu kayda erişim yetkiniz yok.');return rows[0]},
-  logout:token=>request('/auth/v1/logout',{method:'POST',token})
+ const isKey=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+ window.OnamRecords={configured,isId:value=>uuid.test(value),isKey,
+  createKey(){const bytes=crypto.getRandomValues(new Uint8Array(32));return [...bytes].map(b=>b.toString(16).padStart(2,'0')).join('')},
+  async submit(report,accessToken){if(!isKey(accessToken))throw Error('QR erişim anahtarı oluşturulamadı.');const id=await request('/rest/v1/rpc/submit_consent',{method:'POST',body:{p_submission_id:report.submissionId,p_form_version:report.formVersion,p_answers:report.answers,p_access_token:accessToken}});if(typeof id!=='string'||!uuid.test(id))throw Error('Kayıt servisi geçerli bir kayıt numarası döndürmedi.');return id},
+  recordUrl(key){if(!isKey(key))throw Error('QR anahtarı geçersiz');const url=new URL('record.html',location.href);url.hash='key='+key;return url.href},
+  staffUrl(key){if(!isKey(key))throw Error('Yönetim anahtarı geçersiz');const url=new URL('doctor.html',location.href);url.hash='key='+key;return url.href},
+  async getByKey(key){if(!isKey(key))throw Error('QR bağlantısı geçersiz.');const record=await request('/rest/v1/rpc/get_consent_by_token',{method:'POST',body:{p_access_token:key}});if(!record)throw Error('Form bulunamadı veya bu QR bağlantısının erişimi kapatılmış.');return record},
+  async listByStaffKey(key){if(!isKey(key))throw Error('Yönetim anahtarı geçersiz.');const result=await request('/rest/v1/rpc/list_onam_receipts',{method:'POST',body:{p_staff_key:key}});if(!result||!Array.isArray(result.records))throw Error('Yönetim bağlantısı doğrulanamadı.');return result.records}
  };
 })();

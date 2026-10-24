@@ -12,14 +12,14 @@
   {key:'dateTime',label:'Tarih ve saat',prompt:'Form için tarih ve saati kontrol edin. Cihazınızın yerel tarih ve saati önerildi. Değiştirebilir veya doğrulayabilirsiniz.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
   {key:'declaration',label:'Son beyan',prompt:'Son beyanınız için şunu söyleyin veya yazın: Onam formunu okudum, anladım, onaylıyorum.',final:true}
  ];
- let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,saveGeneration=0,confirmationText='',confirmationParts;
+ let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
  const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
- fetch('voice-messages.json?v=8').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
+ fetch('voice-messages.json?v=9').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
  function say(message,parts){window.onamAudio.stop();window.onamAudio.speak(message,undefined,parts)}
  function controls(){
   const confirm=phase==='confirm';
@@ -66,6 +66,7 @@
  function correct(){if(phase!=='confirm')return;abortMic();ask();$('answer').focus()}
  function finish(){
   phase='done';window.onamAudio.stop();$('work').hidden=true;$('result').hidden=false;
+  receiptKey=window.OnamRecords.createKey();
   report={type:'patient-declaration',submissionId:crypto.randomUUID(),formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers,identityVerified:false,clinicalConsentRecorded:false};
   const complete=questions.every(q=>answers[q.key]?.value);
   if(!complete)throw new Error('Zorunlu alan eksik');
@@ -77,17 +78,17 @@
   const token=++saveGeneration;const currentReport=report;
   $('save-retry').hidden=true;$('receipt').hidden=true;$('save-status').textContent='Form sisteme gönderiliyor…';
   try{
-   const id=await window.OnamRecords.submit(currentReport);
+   const id=await window.OnamRecords.submit(currentReport,receiptKey);
    if(token!==saveGeneration||report!==currentReport)return;
-   const url=window.OnamRecords.doctorUrl(id);currentReport.recordId=id;
-   $('save-status').textContent='Form kaydedildi. Doktorunuz QR kodla erişebilir.';
-   const qr=qrcode(0,'M');qr.addData(url);qr.make();$('qr').innerHTML=qr.createSvgTag({cellSize:4,margin:4,scalable:true});
+   const url=window.OnamRecords.recordUrl(receiptKey);currentReport.recordId=id;
+   $('save-status').textContent='Form kaydedildi. QR kodu indirebilir ve sağlık çalışanınızla paylaşabilirsiniz.';
+   window.OnamQR.render($('qr'),url);
    $('record-link').href=url;$('receipt').hidden=false;
   }catch(error){if(token!==saveGeneration||report!==currentReport)return;$('save-status').textContent=error.message;$('save-retry').hidden=!window.OnamRecords.configured}
  }
  function clearReceipt(){saveGeneration++;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
  function reset(){
-  clearReceipt();phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;step=0;confirmationText='';confirmationParts=undefined;
+  clearReceipt();phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
   $('work').hidden=true;$('result').hidden=true;$('start').hidden=false;$('start').focus();
  }
@@ -121,8 +122,9 @@
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questions[step].prompt,phase==='confirm'?confirmationParts:undefined);
+ $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});
  $('save-retry').onclick=saveReport;
  $('reset').onclick=reset;$('clear').onclick=reset;
  $('download').onclick=()=>{if(!report)return;const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='onam-formu.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
- window.addEventListener('pagehide',()=>{clearReceipt();phase='idle';abortMic();answers={};report=null;candidate='';confirmationText='';confirmationParts=undefined;$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});
+ window.addEventListener('pagehide',()=>{clearReceipt();phase='idle';abortMic();answers={};report=null;receiptKey=null;candidate='';confirmationText='';confirmationParts=undefined;$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});
 })();
