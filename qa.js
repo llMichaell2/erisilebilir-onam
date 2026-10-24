@@ -20,7 +20,13 @@
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
  fetch('voice-messages.json?v=9').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
- function say(message,parts){window.onamAudio.stop();window.onamAudio.speak(message,undefined,parts)}
+ function say(message,parts){
+  window.onamAudio.stop();
+  const token=generation,expectedPhase=phase,expectedStep=step;
+  window.onamAudio.speak(message,()=>{
+   if(token===generation&&phase===expectedPhase&&step===expectedStep&&$('auto').checked&&!document.hidden)listen();
+  },parts);
+ }
  function controls(){
   const confirm=phase==='confirm';
   $('confirm').hidden=!confirm;$('correct').hidden=!confirm;
@@ -32,13 +38,14 @@
  function ask(){
   phase='answer';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   $('question').textContent=`Soru ${step+1} / ${questions.length}: ${questions[step].prompt}`;
-  $('status').textContent=Recognition?'Soruyu dinledikten sonra mikrofon düğmesine basın veya cevabınızı yazın.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
+  $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
   controls();$('question').focus();say(questions[step].prompt);
  }
  function submit(value){
   if(phase!=='answer')return;
-  const q=questions[step];value=value.trim();
+  abortMic();const q=questions[step];value=value.trim();
+  if(q.key==='dateTime'&&yes(value))value=$('answer').value;
   if(!value){$('status').textContent='Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.';return}
   if(q.final){
    if(normalize(value)!==normalize(declaration)){
@@ -88,12 +95,12 @@
  }
  function clearReceipt(){saveGeneration++;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
  function reset(){
-  clearReceipt();phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
+  abortMic();clearReceipt();phase='idle';window.onamAudio.stop();answers={};candidate='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
   $('work').hidden=true;$('result').hidden=true;$('start').hidden=false;$('start').focus();
  }
  function listen(){
-  if(!Recognition||!['answer','confirm'].includes(phase))return;
+  if(!Recognition||recognition||!['answer','confirm'].includes(phase))return;
   window.onamAudio.stop();
   const token=generation;const expectedPhase=phase;const expectedStep=step;
   const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=false;rec.interimResults=false;rec.maxAlternatives=1;
@@ -106,7 +113,7 @@
    // End recognition before playing the confirmation, preventing microphone echo.
    abortMic();
    if(phase==='confirm'){if(questions[step].final?normalize(value)===normalize(declaration):yes(value))confirm();else if(no(value))correct();else{$('status').textContent='Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.';say($('status').textContent)}}
-   else{$('answer').value=value;submit(value)}
+   else{submit(value)}
   };
   rec.onerror=e=>{
    if(token!==generation)return;failed=true;
@@ -120,6 +127,10 @@
  $('open').onclick=()=>{if(phase==='idle')$('start').click();document.getElementById('qa-panel').scrollIntoView({block:'start'})};
  $('submit').onclick=()=>submit($('answer').value);
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
+ $('auto').disabled=!Recognition;
+ $('auto').onchange=()=>{if(!$('auto').checked)abortMic()};
+ $('answer').oninput=()=>abortMic();
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questions[step].prompt,phase==='confirm'?confirmationParts:undefined);
  $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});
