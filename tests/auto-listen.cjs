@@ -39,3 +39,7 @@ mic.onresult({results:[final('Yanlış İsim'),final('baştan'),final('Doğru İ
 el('qa-reset').onclick();
 el('qa-start').onclick();done();const failedMic=mic;failedMic.onerror({error:'network'});failedMic.onresult({results:[final('Geç Gelen tamam')]});assert.equal(el('qa-answer').value,'');
 el('qa-reset').onclick();console.log('PASS: spoken restart clears earlier fragments; network error invalidates late results');
+const goToDate=()=>{el('qa-start').onclick();for(const value of ['Deneme Hasta','10000000146','05.10.2005','05381234567']){el('qa-answer').value=value;el('qa-submit').onclick();el('qa-confirm').onclick()}done()};
+goToDate();const nowValue=el('qa-answer').value;assert.equal(nowValue,sandbox.OnamValidation.dateTime(sandbox.OnamValidation.localNow()));result('tamam');assert.match(el('qa-question').textContent,/Son beyan/);el('qa-reset').onclick();
+goToDate();result('yirmi dört ekim iki bin yirmi altı saat on dört dakika otuz tamam');assert.equal(el('qa-answer').value,'24.10.2026 14:30');assert.equal(el('qa-confirm').hidden,false);done();result('tamam');assert.match(el('qa-question').textContent,/Son beyan/);el('qa-reset').onclick();
+console.log('PASS: current device time accepted with one tamam; spoken correction still requires readback confirmation');

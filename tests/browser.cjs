@@ -102,7 +102,7 @@ const root=path.resolve(__dirname,'..');
   await voice('tamam');assert.equal(await slow.locator('#qa-answer').inputValue(),'05.10.2005');await approve();
   await voice('sıfır beş üç sekiz');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await voice('bir iki üç dört beş altı yedi');assert.equal(await slow.locator('#qa-answer').inputValue(),'05381234567');await approve();
-  const suggested=await slow.locator('#qa-answer').inputValue();await voice('evet');assert.equal(await slow.locator('#qa-answer').inputValue(),suggested);await approve();
+  const suggested=await slow.locator('#qa-answer').inputValue();assert.match(suggested,/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/);await voice('tamam');assert.match(await slow.locator('#qa-question').textContent(),/Son beyan/);await finishPrompt();
   await voice('Onam formunu okudum');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await voice('anladım onaylıyorum');assert.equal(await slow.locator('#qa-confirm').isVisible(),true);
   await finishPrompt();await voice('evet');assert.equal(await slow.locator('#qa-result').isVisible(),false);

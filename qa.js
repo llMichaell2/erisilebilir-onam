@@ -9,12 +9,12 @@
   {key:'tc',label:'T.C. kimlik numarası',prompt:'On bir haneli T.C. kimlik numaranız nedir? Rakamları tek tek söyleyin.',clean:V.tc,error:'T.C. kimlik numarası on bir haneli olmalı ve kontrol basamakları geçerli olmalıdır. Bu kontrol kimliğinizi doğrulamaz.'},
   {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Örneğin beş ekim iki bin beş. Duraksayabilirsiniz. Tarihin tamamını söyledikten sonra tamam deyin.',clean:V.birth,error:'Geçerli bir doğum tarihi girin. Örnek biçim: 15.06.1990. Gelecek tarih kabul edilmez.'},
   {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.',clean:V.phone,error:'Geçerli bir Türkiye telefon numarası girin. Başında sıfırla on bir rakam olmalıdır.'},
-  {key:'dateTime',label:'Tarih ve saat',prompt:'Form için cihazınızın önerdiği tarih ve saati kullanmak için evet deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
+  {key:'dateTime',label:'Tarih ve saat',prompt:'Tarih ve saat cihazınızdan otomatik alınır. Kabul etmek için tamam deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
   {key:'declaration',label:'Son beyan',prompt:'Son beyanınız için şunu söyleyin veya yazın: Onam formunu okudum, anladım, onaylıyorum.',final:true}
  ];
- let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts;
+ let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='';
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
- const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
+ const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  let micTimeout=null,answerDraft='';
  const collectingAnswer=()=>phase==='answer';
@@ -40,15 +40,18 @@
  }
  function ask(){
   phase='answer';answerDraft='';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
-  $('question').textContent=`Soru ${step+1} / ${questions.length}: ${questions[step].prompt}`;
+  const q=questions[step];
+  questionSpeech=q.key==='dateTime'?`Tarih ve saat cihazınızdan alındı: ${V.answerParts('dateTime',$('answer').value).join(' ')}. Doğruysa tamam deyin. Düzeltmek için yeni tarih ve saati söyleyip tamam deyin veya yazın.`:q.prompt;
+  $('question').textContent=`Soru ${step+1} / ${questions.length}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
-  controls();$('question').focus();say(questions[step].prompt);
+  controls();$('question').focus();say(questionSpeech);
  }
  function submit(value){
   if(phase!=='answer')return;
   abortMic();answerDraft='';const q=questions[step];value=value.trim();
-  if(q.key==='dateTime'&&yes(value))value=$('answer').value;
+  const acceptSuggested=q.key==='dateTime'&&yes(value);
+  if(acceptSuggested)value=$('answer').value;
   if(!value){$('status').textContent='Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.';return}
   if(q.final){
    if(normalize(value)!==normalize(declaration)){
@@ -59,7 +62,9 @@
   }
   if(q.clean){const cleaned=q.clean(value);if(!cleaned){$('status').textContent=q.error;say(q.error);return}value=cleaned}
   if(q.validate&&q.validate(value)){$('status').textContent=q.validate(value);say($('status').textContent);return}
-  candidate=value;$('answer').value=value;phase='confirm';controls();
+  candidate=value;$('answer').value=value;phase='confirm';
+  if(acceptSuggested){confirm();return}
+  controls();
   const numeric=['tc','phone','birthDate','dateTime'].includes(q.key);
   const grouped=numeric?V.answerParts(q.key,value):[];
   const spoken=numeric?grouped.join(' '):value;
@@ -135,9 +140,9 @@
     const finished=/(?:^|\s)(?:cevabım bitti|tamam|bitti)[.,!?]*$/iu.test(pending);
     const value=finished?pending.replace(/(?:^|\s)(?:cevabım bitti|tamam|bitti)[.,!?]*$/iu,'').trim():pending;
     if(!final)return;
+    if(q.key==='dateTime'&&yes(pending)){acceptTranscript(pending);return}
     if(finished){if(!value){prefix='';resultOffset=results.length;answerDraft='';pending='';$('answer').value='';$('status').textContent='Cevap alınamadı. Önce cevabınızı söyleyin, sonra tamam deyin.';return}acceptTranscript(value);return}
-    if(q.key==='dateTime'&&yes(value)){acceptTranscript(value);return}
-    if(q.final){
+        if(q.final){
      if(normalize(value)===normalize(declaration)||yes(value)||/onaylamıyorum|kabul etmiyorum|anlamadım|hayır/.test(normalize(value)))acceptTranscript(value);
      else $('status').textContent='Duyduğum: '+pending+'. Beyanın devamını söyleyebilirsiniz.';
      return;
@@ -170,7 +175,7 @@
  $('answer').oninput=()=>{answerDraft='';abortMic()};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
- $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questions[step].prompt,phase==='confirm'?confirmationParts:undefined);
+ $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questionSpeech,phase==='confirm'?confirmationParts:undefined);
  $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});
  $('save-retry').onclick=saveReport;
  $('reset').onclick=reset;$('clear').onclick=reset;
