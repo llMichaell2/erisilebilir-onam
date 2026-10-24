@@ -84,3 +84,9 @@ QR üreticisi MIT lisanslı `qrcode-generator` paketinden `vendor/` altında sak
 Hasta ve belge ekranında büyük yazı ve yüksek kontrast seçenekleri bulunur. Yalnızca bu görünüm tercihleri yerel olarak saklanır; hasta cevapları bu amaçla depolanmaz. Klavyeyle “İçeriğe geç” ve “Okunan bölüme dön” bağlantıları kullanılabilir. Belge yazdırılırken ekran kontrast ayarından bağımsız beyaz kâğıt / siyah yazı uygulanır. Yönetim panelinde ad-soyada göre arama ve QR etiket yazdırma vardır.
 
 Axe taramaları WCAG 2 A/AA, 2.1 AA ve 2.2 AA etiketleriyle otomatik denetim yapar. Bunlar tam erişilebilirlik belgesi değildir; TalkBack ve VoiceOver ile gerçek kullanıcı denemeleri ayrıca yapılmalıdır. Klinik form metnine ek soru eklenmez.
+
+## Otomatik dinleme ve yeni veritabanı
+
+Soru–cevabı başlatmak ve tarayıcının ilk mikrofon iznini vermek gerekir. Varsayılan açık otomatik dinleme, soru ve doğrulama seslendirmesi tamamlandıktan sonra başlar. Hasta cevabı söyler, geri okumayı dinler ve “bilgilerim doğru” ya da “düzelteceğim” der. Tarih-saat sorusunda “evet” önerilen zamanı seçer. Son beyan yine tam cümleyle iki kez doğrulanır. Yazmaya başlamak, Durdur, sıfırlama, sekmeyi gizleme veya otomatik dinlemeyi kapatma mikrofonu durdurur. Sessizlik veya hizmet hatasında düğmeyle tekrar denenebilir. Gerçek cihaz ve mikrofonla deneme gerekir.
+
+Erişimi kaybedilen eski Supabase bağlantısı kaldırıldı; config.js yeni Supabase projesine bağlandı. Kayıt ve QR için yeni projede SQL kurulumu ve personel yetkisi tamamlanmalıdır. Yeni ücretsiz Supabase projesinde yukarıdaki üç SQL dosyasını sırayla çalıştırın, personel hesabını yetkilendirin ve config.js alanlarını doldurun. Yeni proje eski kayıtları içermez; eski QR bağlantıları yeni veritabanına taşınmış olmaz.
