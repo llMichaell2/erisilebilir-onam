@@ -20,5 +20,31 @@
  }
  function localNow(){const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}T${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`}
  const words=['sıfır','bir','iki','üç','dört','beş','altı','yedi','sekiz','dokuz'];
- root.OnamValidation={tc,phone,birth,dateTime,localNow,spokenDigits:v=>[...v].map(d=>words[Number(d)]).join(' ')};
+ const tens=['','on','yirmi','otuz','kırk','elli','altmış','yetmiş','seksen','doksan'];
+ function numberParts(value,padded=false){
+  const str=String(value);
+  if(padded&&str.length>1&&str[0]==='0'){
+   if(str.length===2)return ['sıfır '+words[Number(str[1])]];
+   return ['sıfır',...numberParts(str.slice(1),true)];
+  }
+  let n=Number(str);if(!Number.isInteger(n)||n<0||n>9999)throw Error('Unsupported number');
+  if(n===0)return ['sıfır'];
+  const parts=[];
+  if(n>=1000){const thousands=Math.floor(n/1000);parts.push(thousands===1?'bin':words[thousands]+' bin');n%=1000}
+  if(n>=100){const hundreds=Math.floor(n/100);parts.push(hundreds===1?'yüz':words[hundreds]+' yüz');n%=100}
+  if(n)parts.push(n<10?words[n]:[tens[Math.floor(n/10)],n%10?words[n%10]:''].filter(Boolean).join(' '));
+  return parts;
+ }
+ function answerParts(key,value){
+  if(key==='tc')return [...value].map(d=>words[Number(d)]);
+  if(key==='phone')return [value.slice(0,1),value.slice(1,4),value.slice(4,7),value.slice(7,9),value.slice(9,11)].flatMap(group=>numberParts(group,true));
+  if(key==='birthDate'||key==='dateTime'){
+   const [date,time]=value.split(' ');const [day,month,year]=date.split('.');
+   const parts=[...numberParts(day,true),...numberParts(month,true),...numberParts(year)];
+   if(time){const [hour,minute]=time.split(':');parts.push('saat',...numberParts(hour,true),...numberParts(minute,true))}
+   return parts;
+  }
+  return [];
+ }
+ root.OnamValidation={tc,phone,birth,dateTime,localNow,numberParts,answerParts,spokenDigits:v=>[...v].map(d=>words[Number(d)]).join(' ')};
 })(globalThis);

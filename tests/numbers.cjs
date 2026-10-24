@@ -1,0 +1,15 @@
+const fs=require('node:fs');const vm=require('node:vm');const assert=require('node:assert/strict');const path=require('node:path');
+const root=path.resolve(__dirname,'..');const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(root,'validation.js'),'utf8'),ctx);const V=ctx.OnamValidation;
+const spoken=(key,value)=>V.answerParts(key,value).join(' ');
+assert.equal(spoken('phone','05381234567'),'sıfır beş yüz otuz sekiz yüz yirmi üç kırk beş altmış yedi');
+assert.equal(spoken('phone','05000000102'),'sıfır beş yüz sıfır sıfır sıfır sıfır bir sıfır iki');
+assert.equal(spoken('phone','02120001203'),'sıfır iki yüz on iki sıfır sıfır sıfır on iki sıfır üç');
+assert.equal(spoken('birthDate','07.06.2005'),'sıfır yedi sıfır altı iki bin beş');
+assert.equal(spoken('birthDate','31.12.1999'),'otuz bir on iki bin dokuz yüz doksan dokuz');
+assert.equal(spoken('dateTime','07.06.2005 09:05'),'sıfır yedi sıfır altı iki bin beş saat sıfır dokuz sıfır beş');
+assert.equal(spoken('dateTime','01.01.2000 00:00'),'sıfır bir sıfır bir iki bin saat sıfır sıfır sıfır sıfır');
+assert.equal(spoken('tc','10000000146'),'bir sıfır sıfır sıfır sıfır sıfır sıfır sıfır bir dört altı');
+const catalog=new Set(Object.values(JSON.parse(fs.readFileSync(path.join(root,'voice-messages.json'),'utf8'))).flat());
+for(let n=0;n<=9999;n++)for(const part of V.numberParts(n))assert.ok(catalog.has(part),part);
+for(let n=0;n<100;n++)for(const part of V.numberParts(String(n).padStart(2,'0'),true))assert.ok(catalog.has(part),part);
+console.log('PASS: grouped phone, leading zero preservation, padded date, full year, time and unchanged TC; catalog covers all number phrases');

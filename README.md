@@ -17,7 +17,7 @@ Depo kökünde `python3 -m http.server 8000` çalıştırın. Yayındaki GitHub 
 
 ## Sınırlar
 
-- Konuşma tanıma, Chrome sağlayıcısının çevrimiçi hizmetini kullanabilir. Ses dosyaları üretilmemişse cihazın Türkçe sesi kullanılır. Doğal ses durum bilgisi sayfada gösterilir. T.C., telefon ve tarih cevapları aynı kadın sesinin rakam kayıtlarıyla geri okunur; ad-soyad için cihaz sesi kullanılır.
+- Konuşma tanıma, Chrome sağlayıcısının çevrimiçi hizmetini kullanabilir. Ses dosyaları üretilmemişse cihazın Türkçe sesi kullanılır. Doğal ses durum bilgisi sayfada gösterilir. T.C. rakam rakam; telefon 0 / üç / üç / iki / iki hanelik gruplarla; tarih gün, ay ve tam yıl olarak aynı kadın sesiyle geri okunur. Baştaki sıfırlar korunur; ad-soyad için cihaz sesi kullanılır.
 - Cevaplar yalnızca sayfa belleğinde tutulur; localStorage, veritabanı veya hastane sistemine yazılmaz. Sayfayı yenilemek cevapları siler. İndirme kullanıcı tarafından başlatılır.
 - Geri okuyup onaylatma kimlik doğrulaması değildir. Dinleme/anlama beyanı işlem veya kontrast madde onamı ve imza yerine geçmez. Gerçek hastane kaydı için ayrıca yetkilendirilmiş sunucu ve kurum entegrasyonu gerekir.
 - Kaynak fotoğraflardaki klinik metinler aktarılmıştır; tıbbi geçerlilik değerlendirmesi yapılmamıştır.
@@ -43,3 +43,5 @@ Oluşan kayıtları dinleyip telaffuzu kontrol edin. `audio/` MP3 dosyaları ve 
 Ücretli OpenAI üretimi ayrı ve açıkça seçilen bir seçenektir: `NODE_USE_ENV_PROXY=1 node tools/generate-audio.mjs --provider=openai`. Bu yol `TTS_API_KEY` gerektirir; varsayılan komut bu hizmeti kullanmaz. Anahtarı asla kaynak dosyasına veya GitHub’a yazmayın.
 
 `node tests/natural-audio.cjs` ücretli üreticinin istek biçimini, önbelleğini, başarısızlık davranışını ve oynatmayı taklitlerle sınar. Gerçek sağlayıcı bağlantısını veya ses kalitesini doğrulamaz.
+
+`node tests/numbers.cjs` telefon gruplarını, tarih/yıl okumasını, baştaki sıfırları ve ses kataloğunun sayı kapsamını kontrol eder.

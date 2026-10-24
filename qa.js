@@ -19,7 +19,7 @@
  function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
- fetch('voice-messages.json?v=5').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
+ fetch('voice-messages.json?v=6').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
  function say(message,parts){window.onamAudio.stop();window.onamAudio.speak(message,undefined,parts)}
  function controls(){
   const confirm=phase==='confirm';
@@ -50,9 +50,11 @@
   if(q.clean){const cleaned=q.clean(value);if(!cleaned){$('status').textContent=q.error;say(q.error);return}value=cleaned}
   if(q.validate&&q.validate(value)){$('status').textContent=q.validate(value);say($('status').textContent);return}
   candidate=value;$('answer').value=value;phase='confirm';controls();
-  const spoken=['tc','phone'].includes(q.key)?V.spokenDigits(value):value;
+  const numeric=['tc','phone','birthDate','dateTime'].includes(q.key);
+  const grouped=numeric?V.answerParts(q.key,value):[];
+  const spoken=numeric?grouped.join(' '):value;
   const message=q.final?`Beyanınız: ${declaration}. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
-  const parts=voiceBank&&['tc','phone','birthDate','dateTime'].includes(q.key)?[voiceBank[q.key],...[...value].filter(d=>/\d/.test(d)).map(d=>voiceBank.digits[Number(d)]),voiceBank.confirm]:undefined;
+  const parts=voiceBank&&numeric?[voiceBank[q.key],...grouped,voiceBank.confirm]:undefined;
   confirmationText=message;confirmationParts=parts;
   $('status').textContent=message;say(message,parts);
  }

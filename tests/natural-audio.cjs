@@ -27,7 +27,7 @@ const root=path.resolve(__dirname,'..');
  }finally{fs.rmSync(work,{recursive:true,force:true})}
  let load,ended=0,fallback=0,starts=0;
  const playerState={};
- class MockAudio{constructor(src){this.src=src;playerState.current=this}play(){this.onplaying?.();return Promise.resolve()}pause(){this.paused=true}removeAttribute(){}load(){}}
+ class MockAudio{constructor(src){this.src=src;playerState.current=this}play(){playerState.current=this;this.onplaying?.();return Promise.resolve()}pause(){this.paused=true}removeAttribute(){}load(){}}
  const ctx={window:{addEventListener(name,fn){load=fn}},document:{getElementById(){return {textContent:''}}},Audio:MockAudio,fetch:async()=>({ok:true,json:async()=>({clips:{'public question':'audio/test.mp3'}})})};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(root,'natural-audio.js'),'utf8'),ctx);await load();
  const api=ctx.window.onamNatural;const options={rate:1,start:()=>starts++,done:()=>ended++,fallback:()=>fallback++};

@@ -10,11 +10,15 @@ async def main():
         import edge_tts.communicate as communicate
         # Add the operating system trust store while retaining certificate verification.
         communicate._SSL_CTX.load_default_certs()
+        text = sys.stdin.read().strip()
+        # Short number phrases need a sentence boundary for reliable speech output.
+        if text and text[-1] not in '.!?':
+            text += '.'
         output = Path(sys.argv[1])
         temporary = output.with_suffix('.part')
         try:
             await asyncio.wait_for(edge_tts.Communicate(
-                sys.stdin.read(), voice='tr-TR-EmelNeural', rate='-5%',
+                text, voice='tr-TR-EmelNeural', rate='-5%',
                 proxy=os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
             ).save(str(temporary)), timeout=90)
             if temporary.stat().st_size < 100:

@@ -3,7 +3,7 @@
  let clips={},audio=null,session=0,playbackRate=1;
  const status=message=>{const el=document.getElementById('natural-status');if(el)el.textContent=message};
  window.addEventListener('DOMContentLoaded',async()=>{
-  try{const r=await fetch('audio/manifest.json?v=5');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
+  try{const r=await fetch('audio/manifest.json?v=6');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
  });
  function stop(){session++;if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}}
  window.onamNatural={
@@ -12,11 +12,13 @@
   playParts(parts,{rate,start,done,fallback}){
    if(!parts.length||parts.some(part=>!clips[part]))return false;
    stop();playbackRate=rate;const token=session;let index=0,failed=false,started=false;
+   // Load all pieces in advance so spoken groups do not wait on another network request.
+   const players=parts.map(part=>{const player=new Audio(clips[part]);player.preload='auto';return player});
    const fail=()=>{if(token!==session||failed)return;failed=true;stop();status('Doğal ses çalınamadı; cihaz sesiyle devam ediliyor.');fallback()};
    function next(){
     if(token!==session)return;
     if(index>=parts.length){audio=null;done?.();return}
-    const player=new Audio(clips[parts[index++]]);audio=player;player.playbackRate=playbackRate;
+    const player=players[index++];audio=player;player.playbackRate=playbackRate;
     player.onplaying=()=>{if(token===session&&!started){started=true;start?.()}};
     player.onended=next;player.onerror=fail;player.play().catch(fail);
    }
