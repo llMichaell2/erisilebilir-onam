@@ -87,7 +87,7 @@ Axe taramaları WCAG 2 A/AA, 2.1 AA ve 2.2 AA etiketleriyle otomatik denetim yap
 
 ## Otomatik dinleme ve yeni veritabanı
 
-Soru–cevabı başlatmak ve tarayıcının ilk mikrofon iznini vermek gerekir. Varsayılan açık otomatik dinleme, soru ve doğrulama seslendirmesi tamamlandıktan sonra başlar. Hasta cevabı söyler, geri okumayı dinler ve “bilgilerim doğru” ya da “düzelteceğim” der. Tarih-saat sorusunda “evet” önerilen zamanı seçer. Son beyan yine tam cümleyle iki kez doğrulanır. Yazmaya başlamak, Durdur, sıfırlama, sekmeyi gizleme veya otomatik dinlemeyi kapatma mikrofonu durdurur. Sessizlik veya hizmet hatasında düğmeyle tekrar denenebilir. Gerçek cihaz ve mikrofonla deneme gerekir.
+Soru–cevabı başlatmak ve tarayıcının ilk mikrofon iznini vermek gerekir. Varsayılan açık otomatik dinleme, soru ve doğrulama seslendirmesi tamamlandıktan sonra başlar. Hasta cevabı söyler, geri okumayı dinler ve “bilgilerim doğru” ya da “düzelteceğim” der. Tarih-saat sorusunda “evet” önerilen zamanı seçer. Son beyan tam cümleyle alınır; geri okumadan sonra “beyanımı tamamla” veya “onaylıyorum” ile tamamlanır. Yazmaya başlamak, Durdur, sıfırlama, sekmeyi gizleme veya otomatik dinlemeyi kapatma mikrofonu durdurur. Sessizlik veya hizmet hatasında düğmeyle tekrar denenebilir. Gerçek cihaz ve mikrofonla deneme gerekir.
 
 Erişimi kaybedilen eski Supabase bağlantısı kaldırıldı; config.js yeni Supabase projesine bağlandı. Kayıt ve QR için yeni projede SQL kurulumu ve personel yetkisi tamamlanmalıdır. Yeni ücretsiz Supabase projesinde yukarıdaki üç SQL dosyasını sırayla çalıştırın, personel hesabını yetkilendirin ve config.js alanlarını doldurun. Yeni proje eski kayıtları içermez; eski QR bağlantıları yeni veritabanına taşınmış olmaz.
 
@@ -100,3 +100,7 @@ Her cevap için ayrı konuşma oturumu kullanılır. Oturum tarayıcı tarafınd
 ## Otomatik tarih ve saat onayı
 
 Tarih-saat adımına girildiği anda cihazın yerel tarih ve saati alınır, gösterilir ve seslendirilir. Hasta yalnızca “tamam” veya “evet” diyerek bu değeri bir kez onaylayıp sonraki soruya geçebilir; tekrar tarih-saat söylemesi veya ikinci onay vermesi gerekmez. Değeri değiştirirse yeni tarih-saat geri okunarak ayrıca doğrulatılır. Cihazın tarih-saat ayarları esas alınır.
+
+## Son beyanı sesle tamamlama
+
+Hasta altıncı soruda tam beyan cümlesini söyler. Beyanı geri okunduktan sonra “beyanımı tamamla” veya “onaylıyorum” diyerek işlemi bitirir. Düğmeyle tamamlama ve tam cümleyi tekrar söyleme de desteklenir. “Evet”, “tamam” veya “onaylamıyorum” son beyanı tamamlamaz. Kayıtta hastanın tam beyan cümlesi korunur.

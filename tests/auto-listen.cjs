@@ -1,9 +1,9 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:true,disabled:false,focus(){},scrollIntoView(){},replaceChildren(){},removeAttribute(){}});return elements.get(id)};
 const events={};let done,mic,starts=0;
-const window={OnamValidation:{tc:v=>v==='10000000146'?v:null,birth:v=>v,phone:v=>v,dateTime:v=>v,localNow:()=> '24.10.2026 14:30',answerParts:(k,v)=>[v]},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(message,callback){done=callback}},OnamRecords:{}};
+const window={OnamValidation:{tc:v=>v==='10000000146'?v:null,birth:v=>v,phone:v=>v,dateTime:v=>v,localNow:()=> '24.10.2026 14:30',answerParts:(k,v)=>[v]},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(message,callback){done=callback}},OnamRecords:{createKey:()=>'a'.repeat(64),submit:async()=>{throw Error('Mock: no live save')}}};
 const document={hidden:false,getElementById:el,addEventListener:(k,f)=>events[k]=f};
-const sandbox={window,document,fetch:()=>Promise.resolve({ok:false}),crypto:{},setTimeout,clearTimeout};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../validation.js'),'utf8'),sandbox);window.OnamValidation=sandbox.OnamValidation;vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../qa.js'),'utf8'),sandbox);
+const sandbox={window,document,fetch:()=>Promise.resolve({ok:false}),crypto:{randomUUID:()=>'00000000-0000-4000-8000-000000000001'},setTimeout,clearTimeout};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../validation.js'),'utf8'),sandbox);window.OnamValidation=sandbox.OnamValidation;vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../qa.js'),'utf8'),sandbox);
 const result=value=>mic.onresult({results:[Object.assign([{transcript:value}],{isFinal:true})]});
 el('qa-start').onclick();assert.equal(starts,0);done();assert.equal(starts,1);
 result('Deneme Kişi tamam');assert.equal(el('qa-answer').value,'Deneme Kişi');assert.equal(starts,1);done();assert.equal(starts,2);
@@ -43,3 +43,10 @@ const goToDate=()=>{el('qa-start').onclick();for(const value of ['Deneme Hasta',
 goToDate();const nowValue=el('qa-answer').value;assert.equal(nowValue,sandbox.OnamValidation.dateTime(sandbox.OnamValidation.localNow()));result('tamam');assert.match(el('qa-question').textContent,/Son beyan/);el('qa-reset').onclick();
 goToDate();result('yirmi dört ekim iki bin yirmi altı saat on dört dakika otuz tamam');assert.equal(el('qa-answer').value,'24.10.2026 14:30');assert.equal(el('qa-confirm').hidden,false);done();result('tamam');assert.match(el('qa-question').textContent,/Son beyan/);el('qa-reset').onclick();
 console.log('PASS: current device time accepted with one tamam; spoken correction still requires readback confirmation');
+
+for(const approval of ['beyanımı tamamla','onaylıyorum']){
+ goToDate();result('tamam');done();result('Onam formunu okudum anladım onaylıyorum');done();
+ result('onaylamıyorum');assert.equal(el('qa-result').hidden,true);done();
+ result(approval);assert.equal(el('qa-result').hidden,false);assert.equal(el('qa-work').hidden,true);el('qa-reset').onclick();
+}
+console.log('PASS: final declaration ends with either spoken approval; negative approval does not finish');

@@ -106,7 +106,9 @@ const root=path.resolve(__dirname,'..');
   await voice('Onam formunu okudum');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await voice('anladım onaylıyorum');assert.equal(await slow.locator('#qa-confirm').isVisible(),true);
   await finishPrompt();await voice('evet');assert.equal(await slow.locator('#qa-result').isVisible(),false);
-  await slow.locator('#qa-reset').click();checks++;
+  await finishPrompt();await voice('onaylamıyorum');assert.equal(await slow.locator('#qa-result').isVisible(),false);
+  await finishPrompt();await voice('onaylıyorum');assert.equal(await slow.locator('#qa-result').isVisible(),true);assert.match(await slow.locator('#qa-summary').textContent(),/Onam formunu okudum, anladım, onaylıyorum/);
+  await slow.locator('#qa-clear').click();checks++;
   console.log('PASS: mobile viewport, paused name, TC recovery, paused spoken October/year, phone chunks, suggested time and exact declaration safeguards');
   console.log(`${checks} check groups passed. Audio and recognition mocked; real device audio/network/microphone need manual validation.`);
  }finally{await browser.close()}

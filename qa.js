@@ -15,6 +15,7 @@
  let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='';
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
+ const finishApproval=v=>['beyanımı tamamla','onaylıyorum',normalize(declaration)].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  let micTimeout=null,answerDraft='';
  const collectingAnswer=()=>phase==='answer';
@@ -68,7 +69,7 @@
   const numeric=['tc','phone','birthDate','dateTime'].includes(q.key);
   const grouped=numeric?V.answerParts(q.key,value):[];
   const spoken=numeric?grouped.join(' '):value;
-  const message=q.final?`Beyanınız: ${declaration}. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
+  const message=q.final?`Beyanınız: ${declaration}. İşlemi bitirmek için beyanımı tamamla veya onaylıyorum deyin. Beyanımı tamamla düğmesine de basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
   const parts=voiceBank&&numeric?[voiceBank[q.key],...grouped,voiceBank.confirm]:undefined;
   confirmationText=message;confirmationParts=parts;
   $('status').textContent=message;say(message,parts);
@@ -121,7 +122,7 @@
    if(!value.trim())return;resultReceived=true;
    // End recognition before playing the confirmation, preventing microphone echo.
    abortMic();
-   if(phase==='confirm'){if(questions[step].final?normalize(value)===normalize(declaration):yes(value))confirm();else if(no(value))correct();else{$('status').textContent='Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.';say($('status').textContent)}}
+   if(phase==='confirm'){if(questions[step].final?finishApproval(value):yes(value))confirm();else if(no(value))correct();else{$('status').textContent=questions[step].final?'Beyan tamamlanmadı. Bitirmek istiyorsanız beyanımı tamamla veya onaylıyorum deyin.':'Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.';say($('status').textContent)}}
    else{submit(value)}
   }
   rec.onresult=e=>{
