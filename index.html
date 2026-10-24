@@ -61,6 +61,7 @@ button:active{transform:translateY(0)}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--focus);outline-offset:3px}
 .primary{background:#e0fff6;color:#06474c;border-color:#e0fff6}
 .primary:hover{background:#fff;border-color:#fff}
+.qa-shortcut{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 18px;border-radius:15px;margin-top:18px}
 .secondary{background:var(--mint);color:#06474c;border-color:#b7e4dc}
 .secondary:hover{background:#c9f0e7;border-color:#8ed7ca}
 .plain{background:#fff;border-color:var(--line);color:var(--ink)}
@@ -102,6 +103,8 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <p class="eyebrow">♿ Erişilebilir Sağlık Hizmeti</p>
   <h1>🔊 Onam Formu Sesli Okuyucu</h1>
   <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için sesli okuma prototipi.</p>
+  <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
+  <p style="font-size:.85rem;margin-top:8px">Sürüm: Sesli soru–cevap 2</p>
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -141,7 +144,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   <div class="sections" id="sections"></div>
 </section>
 
-<section class="panel" aria-labelledby="qa-heading">
+<section class="panel" id="qa-panel" aria-labelledby="qa-heading">
   <h2 id="qa-heading">Sesli soru–cevap denemesi</h2>
   <p>Deneme bilgileri kullanın. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Bilgiler yalnızca bu açık sayfada tutulur, hastaneye gönderilmez. Sayfa yenilendiğinde silinir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. Gerçek hasta bilgisi kullanmayın.</p>
@@ -294,6 +297,6 @@ button:disabled{opacity:.55;cursor:default;transform:none}
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="qa.js"></script>
+<script src="qa.js?v=2"></script>
 </body>
 </html>

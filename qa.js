@@ -83,6 +83,7 @@
   try{rec.start()}catch{recognition=null;$('listen').disabled=false;$('status').textContent='Mikrofon başlatılamadı. Tekrar deneyin veya yazıyla devam edin.'}
  }
  $('start').onclick=()=>{reset();$('start').hidden=true;$('work').hidden=false;ask()};
+ $('open').onclick=()=>{if(phase==='idle')$('start').click();document.getElementById('qa-panel').scrollIntoView({block:'start'})};
  $('submit').onclick=()=>submit($('answer').value);
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
