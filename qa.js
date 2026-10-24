@@ -16,7 +16,9 @@
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
  const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
- let micTimeout=null;
+ let micTimeout=null,numericDraft='';
+ const numericQuestion=()=>phase==='answer'&&['tc','phone'].includes(questions[step]?.key);
+ const spokenDigits=value=>value.toLocaleLowerCase('tr-TR').split(/[\s,;.:()＋+–—-]+/).map(w=>({sıfır:'0',bir:'1',iki:'2',üç:'3',dört:'4',beş:'5',altı:'6',yedi:'7',sekiz:'8',dokuz:'9'}[w]??w)).join('');
  function abortMic(){clearTimeout(micTimeout);generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
@@ -37,7 +39,7 @@
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
-  phase='answer';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
+  phase='answer';numericDraft='';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   $('question').textContent=`Soru ${step+1} / ${questions.length}: ${questions[step].prompt}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
@@ -45,7 +47,7 @@
  }
  function submit(value){
   if(phase!=='answer')return;
-  abortMic();const q=questions[step];value=value.trim();
+  abortMic();numericDraft='';const q=questions[step];value=value.trim();
   if(q.key==='dateTime'&&yes(value))value=$('answer').value;
   if(!value){$('status').textContent='Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.';return}
   if(q.final){
@@ -101,12 +103,13 @@
   $('work').hidden=true;$('result').hidden=true;$('start').hidden=false;$('start').focus();
  }
  function listen(){
-  if(!Recognition||recognition||!['answer','confirm'].includes(phase))return;
-  window.onamAudio.stop();
+  if(!Recognition||!['answer','confirm'].includes(phase))return;
+  abortMic();window.onamAudio.stop();
   const token=generation;const expectedPhase=phase;const expectedStep=step;
-  const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;
+  const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=numericQuestion();rec.interimResults=true;rec.maxAlternatives=1;
   let resultReceived=false,failed=false,pending='';
-  $('listen').disabled=true;$('status').textContent='Mikrofon açılıyor. İzin istenirse izin verin.';
+  const numberMode=numericQuestion(),prefix=numberMode?numericDraft:'';
+  $('listen').disabled=false;$('listen').textContent='Mikrofonu yeniden başlat';$('status').textContent='Mikrofon açılıyor. İzin istenirse izin verin.';
   rec.onstart=()=>{if(token===generation)$('status').textContent='Dinliyorum. Şimdi konuşabilirsiniz.'};
   function acceptTranscript(value){
    if(token!==generation||phase!==expectedPhase||step!==expectedStep)return;
@@ -119,21 +122,27 @@
   rec.onresult=e=>{
    if(token!==generation||phase!==expectedPhase||step!==expectedStep)return;
    const results=Array.from(e.results||[]);
-   pending=results.map(r=>r[0]?.transcript||'').join(' ').trim();
-   if(expectedPhase==='answer')$('answer').value=pending;
+   pending=[prefix,results.map(r=>r[0]?.transcript||'').join(' ')].filter(Boolean).join(' ').trim();
+   if(expectedPhase==='answer'&&!(questions[step].key==='dateTime'&&yes(pending)))$('answer').value=pending;
    $('status').textContent=pending?'Duyduğum: '+pending:'Dinliyorum. Şimdi konuşabilirsiniz.';
-   if(results.length&&results.every(r=>r.isFinal))acceptTranscript(pending);
+   if(numberMode){
+    numericDraft=pending;const digits=spokenDigits(pending);
+    const q=questions[step],needed=q.key==='tc'?11:(digits.startsWith('90')?12:digits.startsWith('0')?11:10);
+    const count=/^\d*$/.test(digits)?digits.length:0;
+    $('status').textContent=`Duyduğum: ${pending}. ${count} rakam alındı. Duraksayabilirsiniz; numarayı tamamlayana kadar dinliyorum. Düzeltmek için cevabı yazabilirsiniz.`;
+    if(results.length&&results.every(r=>r.isFinal)&&(!/^\d+$/.test(digits)||count>=needed))acceptTranscript(pending);
+   }else if(results.length&&results.every(r=>r.isFinal))acceptTranscript(pending);
   };
   rec.onerror=e=>{
    if(token!==generation)return;failed=true;clearTimeout(micTimeout);
    const messages={'not-allowed':'Mikrofon izni verilmedi. Chrome site ayarlarından izin verebilir veya cevabınızı yazabilirsiniz.','service-not-allowed':'Konuşma tanıma hizmeti kullanılamıyor. Yazıyla devam edebilirsiniz.','audio-capture':'Mikrofon bulunamadı. Bağlantıyı kontrol edin veya yazıyla devam edin.','no-speech':'Ses duyulmadı. Tekrar deneyin veya cevabınızı yazın.','network':'Konuşma tanıma hizmetine ulaşılamadı. İnterneti kontrol edin veya yazıyla devam edin.','aborted':'Mikrofon durduruldu.'};
    $('status').textContent=messages[e.error]||'Sesli cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.';
   };
-  rec.onend=()=>{if(token!==generation)return;clearTimeout(micTimeout);recognition=null;if(pending&&!failed&&!resultReceived){acceptTranscript(pending);return}$('listen').disabled=false;if(!resultReceived&&!failed)$('status').textContent='Cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.'};
+  rec.onend=()=>{if(token!==generation)return;clearTimeout(micTimeout);recognition=null;if(pending&&!failed&&!resultReceived){if(numberMode){numericDraft=pending;$('listen').disabled=false;$('listen').textContent='Numaraya devam etmek için konuş';$('status').textContent='Numara tamamlanmadı. Söyledikleriniz korundu. Mikrofon düğmesine basıp kalan rakamları söyleyin veya yazıyla tamamlayın.';return}acceptTranscript(pending);return}$('listen').disabled=false;if(!resultReceived&&!failed)$('status').textContent='Cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.'};
   try{rec.start();micTimeout=setTimeout(()=>{
    if(token!==generation)return;
    abortMic();$('status').textContent='Konuşma tanıma sonucu gelmedi. Mikrofonla cevap ver düğmesiyle tekrar deneyin. Telefonun mikrofon iznini ve sesle yazma ayarlarını kontrol edin veya yazıyla devam edin.';
-  },25000)}catch{recognition=null;$('listen').disabled=false;$('status').textContent='Mikrofon başlatılamadı. Tekrar deneyin veya yazıyla devam edin.'}
+  },numberMode?120000:25000)}catch{recognition=null;$('listen').disabled=false;$('status').textContent='Mikrofon başlatılamadı. Tekrar deneyin veya yazıyla devam edin.'}
  }
  $('start').onclick=()=>{reset();$('start').hidden=true;$('work').hidden=false;ask()};
  $('open').onclick=()=>{if(phase==='idle')$('start').click();document.getElementById('qa-panel').scrollIntoView({block:'start'})};
@@ -141,7 +150,7 @@
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('auto').disabled=!Recognition;
  $('auto').onchange=()=>{if(!$('auto').checked)abortMic()};
- $('answer').oninput=()=>abortMic();
+ $('answer').oninput=()=>{numericDraft='';abortMic()};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questions[step].prompt,phase==='confirm'?confirmationParts:undefined);
