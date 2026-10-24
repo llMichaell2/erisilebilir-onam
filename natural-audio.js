@@ -1,28 +1,39 @@
-// Only pre-generated public form/question audio is used here. Answers never go to TTS.
+// Public recordings only. Personal answer audio is assembled locally, never uploaded.
 (() => {
- let clips={},audio=null,session=0,playbackRate=1;
+ let clips={},audio=null,session=0,playbackRate=1,objectUrl=null,paused=false;
  const status=message=>{const el=document.getElementById('natural-status');if(el)el.textContent=message};
  window.addEventListener('DOMContentLoaded',async()=>{
-  try{const r=await fetch('audio/manifest.json?v=6');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
+  try{const r=await fetch('audio/manifest.json?v=7');if(!r.ok)throw Error();const m=await r.json();clips=m.clips||{};status(Object.keys(clips).length?'Form ve sorular bilgisayar tarafından oluşturulan doğal ses kayıtlarıyla okunur. Numaralar da aynı kayıt sesiyle okunur. Ad-soyad geri okuması cihaz sesine bağlıdır.':'Doğal ses henüz etkin değil; şimdilik cihaz sesi kullanılıyor.')}catch{status('Doğal ses dosyaları yüklenemedi; cihaz sesi kullanılıyor.')}
  });
- function stop(){session++;if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}}
+ function releaseUrl(){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}}
+ function stop(){session++;paused=false;if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}releaseUrl()}
  window.onamNatural={
-  stop,pause(){audio?.pause()},resume(){audio?.play().catch(()=>status('Ses için tekrar okuma düğmesine basın.'))},setRate(rate){playbackRate=rate;if(audio)audio.playbackRate=rate},
+  stop,pause(){paused=true;audio?.pause()},resume(){paused=false;audio?.play().catch(()=>status('Ses için tekrar okuma düğmesine basın.'))},setRate(rate){playbackRate=rate;if(audio)audio.playbackRate=rate},
   play(message,options){return this.playParts([message],options)},
   playParts(parts,{rate,start,done,fallback}){
    if(!parts.length||parts.some(part=>!clips[part]))return false;
-   stop();playbackRate=rate;const token=session;let index=0,failed=false,started=false;
-   // Load all pieces in advance so spoken groups do not wait on another network request.
-   const players=parts.map(part=>{const player=new Audio(clips[part]);player.preload='auto';return player});
+   stop();playbackRate=rate;const token=session;let failed=false,started=false;
    const fail=()=>{if(token!==session||failed)return;failed=true;stop();status('Doğal ses çalınamadı; cihaz sesiyle devam ediliyor.');fallback()};
-   function next(){
+   function play(src,onend){
     if(token!==session)return;
-    if(index>=parts.length){audio=null;done?.();return}
-    const player=players[index++];audio=player;player.playbackRate=playbackRate;
+    const player=new Audio(src);audio=player;player.playbackRate=playbackRate;
     player.onplaying=()=>{if(token===session&&!started){started=true;start?.()}};
-    player.onended=next;player.onerror=fail;player.play().catch(fail);
+    player.onended=()=>{if(token===session)onend()};player.onerror=fail;
+    if(!paused)player.play().catch(fail);
    }
-   next();return true;
+   function finish(){audio=null;releaseUrl();done?.()}
+   if(parts.length>1&&window.OnamAudioJoin){
+    // One WAV removes per-file playback delays and excessive MP3 edge silence.
+    window.OnamAudioJoin.create(parts.map(part=>clips[part])).then(blob=>{
+     if(token!==session)return;
+     objectUrl=URL.createObjectURL(blob);play(objectUrl,finish);
+    }).catch(fail);
+   }else{
+    let index=0;
+    function next(){if(token!==session)return;if(index>=parts.length){finish();return}play(clips[parts[index++]],next)}
+    next();
+   }
+   return true;
   }
  };
 })();

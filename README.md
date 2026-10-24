@@ -45,3 +45,9 @@ Oluşan kayıtları dinleyip telaffuzu kontrol edin. `audio/` MP3 dosyaları ve 
 `node tests/natural-audio.cjs` ücretli üreticinin istek biçimini, önbelleğini, başarısızlık davranışını ve oynatmayı taklitlerle sınar. Gerçek sağlayıcı bağlantısını veya ses kalitesini doğrulamaz.
 
 `node tests/numbers.cjs` telefon gruplarını, tarih/yıl okumasını, baştaki sıfırları ve ses kataloğunun sayı kapsamını kontrol eder.
+
+## Ses parçaları arasındaki bekleme
+
+Telefon, tarih ve T.C. cevabının sabit kayıtları tarayıcıda çözümlenir; yalnızca baş ve sondaki fazla sessizlikler kısaltılıp tek WAV içinde birleştirilir. Parçalar arasında 40 ms, giriş ve son doğrulama cümlesi sınırlarında 140 ms ara bırakılır; kelime kenarlarında kısa koruma payı vardır. Kişisel bilgi sunucuya gönderilmez, birleşmiş ses dosyası da depoya kaydedilmez. Okuma hızı ayrıca korunur. Durdurma, hazırlığı süren eski cevabın sonradan çalmasını engeller.
+
+`node tests/audio-join.cjs` sessizlik kısaltma ve WAV çıktısını sınar. `node tests/natural-audio.cjs` birleştirme sırasında durdurma, duraklatma, hız ve hata durumlarını da kontrol eder.

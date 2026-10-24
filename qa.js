@@ -19,7 +19,7 @@
  function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
- fetch('voice-messages.json?v=6').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
+ fetch('voice-messages.json?v=7').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
  function say(message,parts){window.onamAudio.stop();window.onamAudio.speak(message,undefined,parts)}
  function controls(){
   const confirm=phase==='confirm';

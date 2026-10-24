@@ -41,4 +41,18 @@ const root=path.resolve(__dirname,'..');
  api.playParts(['public question','public question'],options);api.setRate(.75);playerState.current.onended();assert.equal(ended,beforeDone);assert.equal(playerState.current.playbackRate,.75);playerState.current.onended();assert.equal(ended,beforeDone+1);
  console.log('PASS: recorded answer sequence uses same voice and preserves speed across clips');
 
+ let resolveJoin,rejectJoin,created=0,revoked=0;
+ ctx.URL={createObjectURL(){created++;return 'blob:test'},revokeObjectURL(){revoked++}};
+ ctx.window.OnamAudioJoin={create:()=>new Promise((resolve,reject)=>{resolveJoin=resolve;rejectJoin=reject})};
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ const oldStarts=starts;
+ api.playParts(['public question','public question'],options);api.pause();api.setRate(.8);resolveJoin({});await tick();
+ assert.equal(created,1);assert.equal(starts,oldStarts);assert.equal(playerState.current.playbackRate,.8);
+ await api.resume();assert.equal(starts,oldStarts+1);playerState.current.onended();assert.equal(revoked,1);
+ api.playParts(['public question','public question'],options);api.stop();resolveJoin({});await tick();assert.equal(created,1);
+ const oldFallback=fallback;
+ api.playParts(['public question','public question'],options);rejectJoin(Error('Decode failed'));await tick();assert.equal(fallback,oldFallback+1);
+ console.log('PASS: merged audio waits while paused, respects speed, releases object URL, ignores canceled preparation and handles decoding errors');
+
+
 })().catch(e=>{console.error(e);process.exit(1)});
