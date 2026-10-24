@@ -5,33 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f8fc">
 <title>Onam Formu – Sesli Okuyucu</title>
-<link rel="stylesheet" href="theme.css?v=21">
+<link rel="stylesheet" href="theme.css?v=22">
 </head>
 <body>
-<dialog id="welcome-dialog" aria-labelledby="welcome-title" aria-describedby="welcome-description">
- <span class="pill">Adım adım sesli rehber</span>
- <h2 id="welcome-title">Sesli onam formunu başlat</h2>
- <p id="welcome-description">Formun altı bölümü sırayla okunacak ve ekran okunan bölüme ilerleyecek. Ardından bilgiler ve son beyan kısmına geçeceğiz. İstediğiniz zaman duraklatabilir veya durdurabilirsiniz.</p>
- <p class="muted">Ekran okuyucu kullanıyorsanız düğme adları ve açıklamaları cihazınız tarafından okunur. İsterseniz ek sesli düğme rehberini açabilirsiniz.</p><label class="guide-option"><input type="checkbox" id="welcome-voice-guide"> Düğmelerin görevlerini sesli açıkla</label><div class="welcome-actions"><button id="welcome-start" class="primary" autofocus>Sesli onam formunu başlat</button><button id="welcome-help" class="secondary">Kullanımı sesli anlat</button><button id="welcome-dismiss" class="plain">Kendim okuyacağım</button></div>
+<dialog id="welcome-dialog" aria-labelledby="welcome-title" aria-describedby="welcome-description welcome-audio-note">
+ <span class="pill">Erişilebilir onam</span>
+ <h2 id="welcome-title">Nasıl devam etmek istersiniz?</h2>
+ <p id="welcome-description">Sesli başlat ile kullanım açıklaması ve form size okunur. Sessiz seçeneğiyle formu kendiniz okuyup doldurabilirsiniz.</p>
+ <div class="welcome-actions"><button id="welcome-start" class="primary" autofocus><span aria-hidden="true">🔊</span> Sesli başlat</button><button id="welcome-dismiss" class="plain"><span aria-hidden="true">📖</span> Sessiz, kendim okuyacağım</button></div>
+ <p id="welcome-audio-note" class="muted">Ses başlamazsa Sesli başlat düğmesine dokunun. Telefonunuzun ekran okuyucusu da bu düğmeleri okuyabilir.</p>
 </dialog>
 <div id="guided-controls" class="guided-controls" role="group" aria-label="Sesli rehber kontrolleri" hidden>
  <span id="guided-stage" role="status"></span>
  <button id="guided-pause">Duraklat</button><button id="guided-resume">Devam et</button><button id="guided-stop">Durdur</button>
 </div>
 <a class="skip-link" href="#main-content">İçeriğe geç</a>
-<div class="site-bar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O</span><span>Erişilebilir Onam<small>Bilgiyi herkes için erişilebilir kılın</small></span></a><div class="accessibility-bar" aria-label="Görünüm ayarları"><button id="text-size" aria-pressed="false">Aa · Büyük yazı</button><button id="contrast" aria-pressed="false">Yüksek kontrast</button><button id="interface-guide-toggle" aria-pressed="false" aria-describedby="interface-guide-note">Sesli düğme rehberi: kapalı</button></div></div>
+<div class="site-bar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O</span><span>Erişilebilir Onam<small>Bilgiyi herkes için erişilebilir kılın</small></span></a><div class="accessibility-bar" aria-label="Görünüm ayarları"><button id="text-size" aria-pressed="false">Aa · Büyük yazı</button><button id="contrast" aria-pressed="false">Yüksek kontrast</button></div></div>
 <p id="display-status" class="sr-only" role="status"></p>
 <main id="main-content">
-<section class="panel interface-help" aria-labelledby="interface-help-title">
- <details id="interface-help"><summary id="interface-help-title">Ekran okuyucu ve sesli kullanım rehberi</summary>
- <p id="interface-guide-note">NVDA, VoiceOver veya TalkBack gibi bir ekran okuyucuyla düğmelerin adlarını ve görevlerini dinleyebilirsiniz. Ek sesli düğme rehberi isteğe bağlıdır; ekran okuyucunuz zaten konuşuyorsa iki sesin çakışmaması için kapalı bırakabilirsiniz.</p>
- <p>Bilgisayarda Tab ile sonraki, Shift ve Tab ile önceki düğmeye gidin. Enter veya boşluk ile düğmeyi çalıştırın. Başlangıç penceresini Escape ile kapatabilirsiniz.</p>
- <p>Sesli onam formunu başlat düğmesi altı bölümü sırayla okur. Okuma sırasında alt tarafta kalan rehber çubuğundaki Duraklat, Devam et ve Durdur düğmeleri kullanılabilir. Bölümler bitince bilgiler kısmı açılır.</p>
- <p>Bilgiler kısmında ad-soyad ve doğum tarihinizi söyledikten sonra tamam deyin. T.C. ve telefon rakamlarını tek tek söyleyin. Baştan diyerek o cevabı temizleyebilirsiniz. Tarih-saat için tamam, son beyan geri okunduktan sonra onaylıyorum diyebilirsiniz.</p>
- <button id="interface-help-read" class="secondary">Kullanımı sesli anlat</button>
- </details>
- <p id="interface-guide-status" class="muted" role="status"></p>
-</section>
+<section class="panel interface-help" aria-labelledby="interface-help-title"><details id="interface-help"><summary id="interface-help-title">Ekran okuyucu ve klavye kullanımı</summary><p>Bilgisayarda Tab ile sonraki, Shift ve Tab ile önceki düğmeye gidin. Enter veya boşluk ile düğmeyi çalıştırın. Ekran okuyucunuz düğmelerin adını ve görevini okuyabilir.</p><p>Sesli kullanımda form bölümleri sırayla okunur; okuma sırasında Duraklat, Devam et ve Durdur düğmeleri ekranda kalır. Sonra bilgiler ve beyan kısmına geçilir.</p></details></section>
 <header class="patient-hero">
   <span class="pill">Sesli okuma ve adım adım doğrulama</span>
   <h1>Onam formunuzu<br>kendi hızınızda dinleyin.</h1>
@@ -229,8 +221,8 @@
   }
   speakNext();
  }
- function readOne(i){stopAll();updateCurrent(i);isReading=true;speakText(data[i].title+'. '+data[i].text,()=>{isReading=false;progress.value=Math.round(((i+1)/data.length)*100);progressLabel.textContent=progress.value+'%';text.textContent='Bu bölümün okuması tamamlandı.'})}
- function readAll(start=0,guide=false){stopAll();guided=guide;followed=-1;document.getElementById('guided-controls').hidden=!guide;queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
+ function readOne(i){window.onamSilent=false;stopAll();updateCurrent(i);isReading=true;speakText(data[i].title+'. '+data[i].text,()=>{isReading=false;progress.value=Math.round(((i+1)/data.length)*100);progressLabel.textContent=progress.value+'%';text.textContent='Bu bölümün okuması tamamlandı.'})}
+ function readAll(start=0,guide=false){window.onamSilent=false;stopAll();guided=guide;followed=-1;document.getElementById('guided-controls').hidden=!guide;queue=data.slice(start);queuePos=0;index=start;isReading=true;playNext()}
  function playNext(){
   if(queuePos>=queue.length){isReading=false;progress.value=100;progressLabel.textContent='100%';text.textContent='Tüm bölümlerin okunması tamamlandı.';
    const proceed=guided;guided=false;document.getElementById('guided-controls').hidden=true;
@@ -247,13 +239,28 @@
  document.getElementById('previous').addEventListener('click',()=>readOne(Math.max(0,index-1)));
  document.getElementById('next').addEventListener('click',()=>readOne(Math.min(data.length-1,index+1)));
  document.querySelectorAll('[data-rate]').forEach(b=>b.addEventListener('click',()=>{rate=Number(b.dataset.rate);window.onamNatural?.setRate(rate);document.querySelectorAll('[data-rate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
- window.onamAudio={stop:stopAll,isBusy:()=>isReading,speak:(message,done,parts)=>speakText(message,()=>{isReading=false;done?.()},false,parts)};
+ window.onamAudio={stop:stopAll,isBusy:()=>isReading,speak:(message,done,parts)=>{if(window.onamSilent){isReading=false;done?.();return}speakText(message,()=>{isReading=false;done?.()},false,parts)}};
  const welcome=document.getElementById('welcome-dialog');
- document.getElementById('welcome-start').onclick=()=>{welcome.close();readAll(0,true)};
- document.getElementById('welcome-dismiss').onclick=()=>{welcome.close();document.getElementById('qa-open').focus()};
- welcome.addEventListener('cancel',()=>{setTimeout(()=>document.getElementById('qa-open').focus(),0)});
+ const welcomeMessage='Erişilebilir onam formuna hoş geldiniz. Formu dinlemek için Sesli başlat düğmesini seçin. Okuyarak ilerlemek için Sessiz, kendim okuyacağım düğmesini seçin.';
+ const usageMessage='Sesli kullanım başladı. Önce formun altı bölümü sırayla okunacak. Ekran okunan bölüme ilerleyecek. Okuma sırasında alt tarafta Duraklat, Devam et ve Durdur düğmeleri bulunur. Sonra bilgileriniz sorulacak. Ad-soyad ve doğum tarihi cevabınızı söyledikten sonra tamam deyin. T.C. ve telefon rakamlarını tek tek söyleyin. Baştan diyerek cevabı temizleyebilirsiniz. Tarih ve saat için tamam deyin. Son beyan geri okunduktan sonra onaylıyorum diyerek bitirin.';
+ function chooseSilent(){window.onamSilent=true;stopAll();const automatic=document.getElementById('qa-auto');if(automatic)automatic.checked=false;document.getElementById('qa-open').focus()}
+ document.getElementById('welcome-start').onclick=()=>{
+  welcome.close();window.onamSilent=false;const automatic=document.getElementById('qa-auto');if(automatic)automatic.checked=true;
+  stopAll();guided=true;document.getElementById('guided-controls').hidden=false;document.getElementById('guided-stage').textContent='Kullanım açıklaması';
+  const token=speechSession;speakText(usageMessage,()=>{if(token===speechSession)readAll(0,true)},false);
+ };
+ document.getElementById('welcome-dismiss').onclick=()=>{welcome.close();chooseSilent()};
+ welcome.addEventListener('cancel',event=>{event.preventDefault();welcome.close();chooseSilent()});
  for(const [control,target] of [['guided-pause','pause'],['guided-resume','resume'],['guided-stop','stop']])document.getElementById(control).onclick=()=>document.getElementById(target).click();
- window.addEventListener('DOMContentLoaded',()=>welcome.showModal());
+ window.addEventListener('DOMContentLoaded',()=>{
+  welcome.showModal();window.onamSilent=false;
+  // Browsers can refuse sound before a gesture. Both choices remain usable.
+  if('speechSynthesis' in window&&'SpeechSynthesisUtterance' in window){
+   const intro=new SpeechSynthesisUtterance(welcomeMessage);intro.lang='tr-TR';intro.rate=1;
+   const voice=window.speechSynthesis.getVoices().find(v=>/^tr(?:-|_|$)/i.test(v.lang));if(voice)intro.voice=voice;
+   intro.onerror=()=>{};window.speechSynthesis.speak(intro);
+  }
+ });
  window.addEventListener('pagehide',stopAll);
  renderSections();updateCurrent(0);
 })();
@@ -265,6 +272,6 @@
 <script src="qr-ui.js?v=11"></script>
 <script src="qa.js?v=21"></script>
 <script src="accessibility.js?v=11"></script>
-<script src="interface-guide.js?v=21"></script>
+<script src="interface-guide.js?v=22"></script>
 </body>
 </html>

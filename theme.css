@@ -13,3 +13,5 @@
 @media(max-width:480px){.guided-controls span{width:100%;text-align:center}.guided-controls button{flex:1;padding-inline:8px}}@media print{#welcome-dialog,.guided-controls{display:none!important}}
 
 .guide-option{display:flex;align-items:flex-start;gap:12px;font-size:1rem}.guide-option input,#qa-auto{width:24px;height:24px;min-width:24px;flex:none;accent-color:var(--teal)}.guide-option input{margin-top:4px}.interface-help{margin-top:0;padding:18px 24px}.interface-help summary{font-weight:750;cursor:pointer;min-height:44px}.interface-help details[open] summary{margin-bottom:16px}.interface-help p{font-size:1rem}.interface-help #interface-guide-status:empty{display:none}summary:focus-visible{outline:4px solid var(--focus);outline-offset:4px}
+
+#welcome-dialog .welcome-actions button{min-height:72px;font-size:1.15rem;touch-action:manipulation}#welcome-audio-note{font-size:.95rem;margin-top:20px;margin-bottom:0}

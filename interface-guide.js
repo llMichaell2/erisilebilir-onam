@@ -1,19 +1,8 @@
-// Optional focus narration complements native screen readers; it never reads answer values.
+// Native screen-reader descriptions. No extra focus narration.
 (() => {
- 'use strict';
- const toggle=document.getElementById('interface-guide-toggle'),checkbox=document.getElementById('welcome-voice-guide');
- if(!toggle||!checkbox)return;
- const status=document.getElementById('interface-guide-status');
- const supported='speechSynthesis' in window&&'SpeechSynthesisUtterance' in window;
- let enabled=false,timer=null,ownUtterance=null;
- const busy=()=>!!window.onamAudio?.isBusy?.()||!!window.onamMicActive?.()||document.hidden;
  const descriptions={
-  'welcome-start':'Altı form bölümünü sırayla okur, okunan bölüme ilerler ve sonunda bilgiler kısmını açar.',
-  'welcome-help':'Sayfanın nasıl kullanılacağını sesli anlatır. Formu veya mikrofonu başlatmaz.',
-  'welcome-dismiss':'Başlangıç penceresini kapatır. Sayfayı kendi ekran okuyucunuzla veya yazılı olarak kullanabilirsiniz.',
-  'welcome-voice-guide':'Açıkken düğmelere klavyeyle odaklandığınızda adları ve görevleri seslendirilir. Ekran okuyucunuz zaten konuşuyorsa kapalı bırakabilirsiniz.',
-  'interface-guide-toggle':'İsteğe bağlı sesli düğme açıklamalarını açar veya kapatır. Form okunurken ve mikrofon açıkken açıklamalar araya girmez.',
-  'interface-help-read':'Sayfanın düğmelerini ve sesli cevap adımlarını anlatır.',
+  'welcome-start':'Kullanım açıklamasını ve altı form bölümünü sırayla okur, ardından bilgiler kısmını açar.',
+  'welcome-dismiss':'Sesleri ve otomatik mikrofonu kapatır. Formu okuyarak ve yazarak doldurabilirsiniz.',
   'text-size':'Sayfadaki metinleri büyütür veya normal boyuta döndürür.',
   'contrast':'Yüksek kontrast görünümünü açar veya kapatır.',
   'qa-open':'Doğrudan hasta bilgileri ve son beyan sorularına geçer. Form bölümlerini baştan okumaz.',
@@ -50,45 +39,4 @@
   const existing=control.getAttribute('aria-describedby');control.setAttribute('aria-describedby',[existing,hint.id].filter(Boolean).join(' '));
  }
  for(const button of document.querySelectorAll('[data-rate]'))button.setAttribute('aria-label',button.textContent+' okuma hızı');
- const intro='Erişilebilir onam formuna hoş geldiniz. Başlangıç penceresinde Sesli onam formunu başlat düğmesi bulunur. Bu düğme altı bölümü sırayla okur ve sonunda bilgiler kısmına geçer. Kullanımı sesli anlat düğmesi bu açıklamayı tekrarlar. Kendim okuyacağım düğmesi pencereyi kapatır. Bilgisayarda Tab ile sonraki, Shift ve Tab ile önceki düğmeye gidin. Enter veya boşluk ile düğmeyi çalıştırın. Okuma sırasında sayfanın altındaki rehber çubuğunda Duraklat, Devam et ve Durdur düğmeleri bulunur. Bilgiler kısmında ad-soyad ve doğum tarihi cevabınızı bitirince tamam deyin. T.C. ve telefon rakamlarını tek tek söyleyin. Baştan diyerek o cevabı temizleyebilirsiniz. Tarih ve saat için tamam deyin. Son beyan geri okunduktan sonra onaylıyorum diyerek bitirin. Ekran okuyucunuz zaten konuşuyorsa ek sesli düğme rehberini kapalı bırakabilirsiniz.';
- function stopOwn(){clearTimeout(timer);if(ownUtterance){ownUtterance=null;window.speechSynthesis.cancel()}}
- function speak(message){
-  if(!supported)return;
-  if(busy()){status.textContent='Form okunurken veya mikrofon açıkken düğme açıklamaları bekletilir.';return}
-  stopOwn();
-  const chunks=[];let part='';
-  for(const word of message.split(/\s+/)){if(part.length+word.length>180){chunks.push(part);part=''}part+=(part?' ':'')+word}if(part)chunks.push(part);
-  const voices=window.speechSynthesis.getVoices(),voice=voices.find(v=>/^tr(?:-|_|$)/i.test(v.lang));
-  function next(){
-   if(busy()||!chunks.length)return;
-   const utterance=new SpeechSynthesisUtterance(chunks.shift());utterance.lang='tr-TR';utterance.rate=1;if(voice)utterance.voice=voice;
-   ownUtterance=utterance;
-   utterance.onend=()=>{if(ownUtterance!==utterance)return;ownUtterance=null;next()};
-   utterance.onerror=()=>{if(ownUtterance===utterance)ownUtterance=null};
-   window.speechSynthesis.speak(utterance);
-  }
-  next();
- }
- function setEnabled(value,announce=true){
-  enabled=supported&&value;toggle.setAttribute('aria-pressed',String(enabled));toggle.textContent='Sesli düğme rehberi: '+(enabled?'açık':'kapalı');checkbox.checked=enabled;
-  if(announce){try{localStorage.setItem('onam-interface-guide',String(enabled))}catch{};stopOwn();status.textContent=enabled?'Sesli düğme rehberi açıldı. Tab ile düğmelere giderek görevlerini dinleyebilirsiniz.':'Sesli düğme rehberi kapatıldı.';if(enabled)speak(status.textContent)}
- }
- toggle.disabled=checkbox.disabled=!supported;
- try{setEnabled(localStorage.getItem('onam-interface-guide')==='true',false)}catch{setEnabled(false,false)}
- toggle.onclick=()=>setEnabled(!enabled);checkbox.onchange=()=>setEnabled(checkbox.checked);
- for(const id of ['welcome-help','interface-help-read'])document.getElementById(id).onclick=()=>speak(intro);
- document.addEventListener('focusin',event=>{
-  clearTimeout(timer);if(!enabled)return;
-  const control=event.target.closest('button,a[href],input,select,summary');if(!control||control.disabled)return;
-  timer=setTimeout(()=>{
-   if(document.activeElement!==control||busy())return;
-   const label=control.getAttribute('aria-label')||control.labels?.[0]?.textContent||control.textContent.trim();
-   const description=descriptions[control.id]||control.getAttribute('aria-label')||'';
-   const state=control.hasAttribute('aria-pressed')?(control.getAttribute('aria-pressed')==='true'?' Açık.':' Kapalı.'):control.type==='checkbox'?(control.checked?' İşaretli.':' İşaretli değil.') :'';
-   speak(label+'. '+description+state);
-  },250);
- });
- window.addEventListener('onam-stop',stopOwn);
- window.addEventListener('pagehide',stopOwn);
- document.addEventListener('visibilitychange',()=>{if(document.hidden)stopOwn()});
 })();

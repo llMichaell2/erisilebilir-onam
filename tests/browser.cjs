@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
  let checks=0;
  try{
-  async function pageWithMocks({recognition=true,mobile=false,welcome=false}={}){
+  async function pageWithMocks({recognition=true,mobile=false,welcome=false,autoplayBlocked=false}={}){
    const page=await browser.newPage(mobile?{viewport:{width:375,height:812},isMobile:true,hasTouch:true}:{});
    await page.route('https://onam.test/**',route=>{
     const pathname=new URL(route.request().url()).pathname;
@@ -18,16 +18,16 @@ const root=path.resolve(__dirname,'..');
     const type=file.endsWith('.css')?'text/css':file.endsWith('.js')?'application/javascript':file.endsWith('.json')?'application/json':'text/html';
     return route.fulfill({contentType:type,body:fs.readFileSync(path.join(root,file),'utf8')});
    });
-   await page.addInitScript(({recognition})=>{
+   await page.addInitScript(({recognition,autoplayBlocked})=>{
     window.spoken=[];window.speechSynthesisUtterance=undefined;
     window.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
     const tr={lang:'tr-TR',voiceURI:'turkish',name:'Türkçe',localService:true};
-    Object.defineProperty(window,'speechSynthesis',{value:{speaking:false,paused:false,getVoices(){return [{lang:'en-US',name:'English'},tr]},addEventListener(){},cancel(){this.speaking=false},resume(){this.paused=false},pause(){this.paused=true},speak(u){window.lastUtterance=u;spoken.push({text:u.text,rate:u.rate,lang:u.lang,voice:u.voice?.lang});this.speaking=true;u.onstart?.()}}});
+    Object.defineProperty(window,'speechSynthesis',{value:{speaking:false,paused:false,getVoices(){return [{lang:'en-US',name:'English'},tr]},addEventListener(){},cancel(){this.speaking=false},resume(){this.paused=false},pause(){this.paused=true},speak(u){window.lastUtterance=u;spoken.push({text:u.text,rate:u.rate,lang:u.lang,voice:u.voice?.lang});if(autoplayBlocked&&spoken.length===1){this.speaking=false;u.onerror?.({error:'not-allowed'});return}this.speaking=true;u.onstart?.()}}});
     if(recognition){window.SpeechRecognition=class{start(){window.mic=this;this.history=[];const handler=this.onresult;this.onresult=e=>{this.history.push(...Array.from(e.results,r=>Object.assign(Array.from(r),{isFinal:r.isFinal??true})));handler({...e,results:this.history})};this.onstart?.()}abort(){this.onend?.()}}}else{window.SpeechRecognition=undefined;window.webkitSpeechRecognition=undefined}
-   },{recognition});
+   },{recognition,autoplayBlocked});
    await page.route('https://*.supabase.co/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{"message":"Test: no live database requests"}'}));
    await page.goto('https://onam.test/');
-   if(!welcome)await page.locator('#welcome-dismiss').click();
+   if(!welcome){await page.locator('#welcome-dismiss').click();await page.evaluate(()=>{window.onamSilent=false;document.getElementById('qa-auto').checked=true;window.spoken=[];window.lastUtterance=null})}
    return page;
   }
   const p=await pageWithMocks();const errors=[];p.on('pageerror',e=>errors.push(e.message));
@@ -113,13 +113,14 @@ const root=path.resolve(__dirname,'..');
   console.log('PASS: mobile viewport, paused name, TC recovery, paused spoken October/year, phone chunks, suggested time and exact declaration safeguards');
   const guide=await pageWithMocks({welcome:true,mobile:true});
   assert.equal(await guide.locator('#welcome-dialog').isVisible(),true);
-  assert.equal(await guide.evaluate(()=>spoken.length),0);
+  assert.ok((await guide.evaluate(()=>spoken[0].text)).includes('Sesli başlat'));
   assert.equal(await guide.evaluate(()=>document.activeElement.id),'welcome-start');
   for(const width of [320,375,768,1280]){await guide.setViewportSize({width,height:812});assert.equal(await guide.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}
   await guide.setViewportSize({width:375,height:812});
   await guide.screenshot({path:path.join(root,'../welcome-mobile.png')});
   await guide.locator('#welcome-start').click();assert.equal(await guide.locator('#welcome-dialog').isVisible(),false);
   assert.equal(await guide.locator('#guided-controls').isVisible(),true);
+  await guide.evaluate(()=>{let guard=0;while(document.getElementById('guided-stage').textContent==='Kullanım açıklaması'&&window.lastUtterance&&guard++<100){const u=window.lastUtterance;window.lastUtterance=null;u.onend?.()}});
   assert.equal(await guide.evaluate(()=>document.activeElement.textContent),'1. İşlemin açıklaması');
   assert.equal(await guide.locator('#qa-work').isVisible(),false);
   await guide.locator('#guided-pause').click();assert.equal(await guide.evaluate(()=>speechSynthesis.paused),true);
@@ -137,23 +138,20 @@ const root=path.resolve(__dirname,'..');
   const stopped=await pageWithMocks({welcome:true});await stopped.locator('#welcome-start').click();
   await stopped.evaluate(()=>window.beforeStop=lastUtterance);await stopped.locator('#guided-stop').click();await stopped.evaluate(()=>beforeStop.onend());
   assert.equal(await stopped.locator('#qa-work').isVisible(),false);assert.equal(await stopped.locator('#guided-controls').isVisible(),false);
-  const escaped=await pageWithMocks({welcome:true});await escaped.keyboard.press('Escape');assert.equal(await escaped.locator('#welcome-dialog').isVisible(),false);assert.equal(await escaped.evaluate(()=>spoken.length),0);
+  const escaped=await pageWithMocks({welcome:true});await escaped.keyboard.press('Escape');assert.equal(await escaped.locator('#welcome-dialog').isVisible(),false);assert.equal(await escaped.evaluate(()=>speechSynthesis.speaking),false);assert.equal(await escaped.evaluate(()=>window.onamSilent),true);
   checks++;console.log('PASS: initial accessible dialog, responsive layout, guided six-section reading/focus, pause/resume, automatic QA handoff, stop cancellation and Escape dismissal');
-  const accessible=await pageWithMocks({welcome:true});
-  await accessible.locator('#welcome-help').click();await accessible.evaluate(()=>{let guard=0;while(window.lastUtterance&&guard++<100){const u=window.lastUtterance;window.lastUtterance=null;u.onend?.()}});assert.ok((await accessible.evaluate(()=>spoken.map(s=>s.text).join(' '))).includes('Shift ve Tab'));
-  await accessible.locator('#welcome-voice-guide').check();assert.equal(await accessible.locator('#interface-guide-toggle').getAttribute('aria-pressed'),'true');
-  await accessible.locator('#welcome-dismiss').click();
-  await accessible.locator('#play').focus();await accessible.waitForFunction(()=>spoken.some(s=>s.text.includes('Formun altı bölümünü baştan sona okur')));
-  const ids=await accessible.locator('#play').getAttribute('aria-describedby');assert.ok(ids.includes('play-help'));
-  await accessible.locator('#play').click();await accessible.locator('#pause').focus();const duringRead=await accessible.evaluate(()=>spoken.length);await accessible.waitForTimeout(350);assert.equal(await accessible.evaluate(()=>spoken.length),duringRead);
-  await accessible.locator('#stop').click();await accessible.locator('#qa-start').click();assert.equal(await accessible.locator('#qa-answer-label').textContent(),'Ad soyad — cevabınız');
-  await accessible.locator('#qa-listen').click();await accessible.locator('#qa-confirm').evaluate(el=>el.hidden=false);await accessible.locator('#qa-confirm').focus();const duringMic=await accessible.evaluate(()=>spoken.length);await accessible.waitForTimeout(350);assert.equal(await accessible.evaluate(()=>spoken.length),duringMic);
-  await accessible.locator('#qa-reset').click();await accessible.locator('#qa-start').click();await accessible.locator('#stop').click();await accessible.locator('#qa-answer').fill('KİŞİSEL GİZLİ DEĞER');await accessible.locator('#qa-answer').blur();await accessible.locator('#qa-answer').focus();
-  await accessible.waitForFunction(()=>spoken.some(s=>s.text.includes('Sorulan bilginin cevap alanıdır')));
-  assert.equal((await accessible.evaluate(()=>spoken.at(-1).text)).includes('KİŞİSEL GİZLİ DEĞER'),false);
-  await accessible.locator('#interface-guide-toggle').click();assert.equal(await accessible.locator('#interface-guide-toggle').getAttribute('aria-pressed'),'false');
-  const describedControls=await accessible.locator('[aria-describedby]').evaluateAll(nodes=>nodes.every(el=>el.getAttribute('aria-describedby').split(/\s+/).every(id=>!!document.getElementById(id))));assert.equal(describedControls,true);
-  checks++;console.log('PASS: optional spoken orientation/focus descriptions, native descriptions, no speech during form/microphone, private answer not narrated, guide toggle and dynamic answer label');
+  const silent=await pageWithMocks({welcome:true,mobile:true});
+  assert.equal(await silent.locator('#welcome-dialog button').count(),2);
+  assert.equal(await silent.locator('#welcome-help,#interface-guide-toggle,#welcome-voice-guide').count(),0);
+  await silent.locator('#welcome-dismiss').click();assert.equal(await silent.evaluate(()=>speechSynthesis.speaking),false);assert.equal(await silent.locator('#qa-auto').isChecked(),false);
+  const quietCount=await silent.evaluate(()=>spoken.length);await silent.locator('#qa-start').click();await silent.locator('#qa-answer').fill('Sessiz Hasta');await silent.locator('#qa-submit').click();await silent.locator('#qa-confirm').click();assert.equal(await silent.evaluate(()=>spoken.length),quietCount);assert.equal(await silent.evaluate(()=>window.mic===undefined),true);
+  assert.equal(await silent.locator('#qa-answer-label').textContent(),'T.C. kimlik numarası — cevabınız');
+  assert.equal(await silent.locator('[aria-describedby]').evaluateAll(nodes=>nodes.every(el=>el.getAttribute('aria-describedby').split(/\s+/).every(id=>!!document.getElementById(id)))),true);
+  const blocked=await pageWithMocks({welcome:true,mobile:true,autoplayBlocked:true});assert.equal(await blocked.locator('#welcome-dialog').isVisible(),true);assert.equal(await blocked.evaluate(()=>speechSynthesis.speaking),false);
+  await blocked.locator('#welcome-start').click();assert.equal(await blocked.evaluate(()=>speechSynthesis.speaking),true);assert.equal(await blocked.evaluate(()=>window.onamSilent),false);assert.equal(await blocked.locator('#guided-controls').isVisible(),true);
+  assert.ok((await blocked.evaluate(()=>spoken.at(-1).text)).includes('Sesli kullanım başladı'));
+  await blocked.locator('#guided-stop').click();
+  checks++;console.log('PASS: two large mobile choices, startup announcement attempt, blocked autoplay recovers on explicit start, silent QA has no audio/microphone, native screen-reader descriptions preserved');
   console.log(`${checks} check groups passed. Audio and recognition mocked; real device audio/network/microphone need manual validation.`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
