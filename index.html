@@ -195,7 +195,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
  }
  function speakText(str,onend){
   if(!('speechSynthesis' in window)){text.textContent='Bu tarayıcı sesli okumayı desteklemiyor. Güncel Safari veya Chrome deneyin.';return}
-  const u=new SpeechSynthesisUtterance(str);u.lang='tr-TR';u.rate=rate;
+  const spokenText=str.replace(/\bMR\b/g,'emar').replace(/\bBT\b/g,'bilgisayarlı tomografi');
+  const u=new SpeechSynthesisUtterance(spokenText);u.lang='tr-TR';u.rate=rate;
   u.onstart=()=>{isReading=true;updateCurrent(index)};
   u.onend=()=>{if(onend)onend()};
   u.onerror=()=>{isReading=false};
