@@ -95,6 +95,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 [hidden]{display:none!important}
 #qa-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
 #qa-summary{white-space:pre-line;overflow-wrap:anywhere}
+#qa-qr{max-width:300px}#qa-qr svg{display:block;width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -102,9 +103,9 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 <header>
   <p class="eyebrow">♿ Erişilebilir Sağlık Hizmeti</p>
   <h1>🔊 Onam Formu Sesli Okuyucu</h1>
-  <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için sesli okuma prototipi.</p>
+  <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için erişilebilir onam formu.</p>
   <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
-  <p style="font-size:.85rem;margin-top:8px">Sürüm: Kısa aralıklı sesli doğrulama · 7</p>
+  <p style="font-size:.85rem;margin-top:8px">Sürüm: Form kaydı ve doktor QR erişimi · 8</p>
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -146,9 +147,9 @@ button:disabled{opacity:.55;cursor:default;transform:none}
 </section>
 
 <section class="panel" id="qa-panel" aria-labelledby="qa-heading">
-  <h2 id="qa-heading">Sesli soru–cevap denemesi</h2>
-  <p>Ad-soyad, T.C. kimlik numarası, doğum tarihi, telefon ve tarih-saat zorunludur; soru atlanamaz. Deneme bilgileri kullanın. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Bilgiler yalnızca bu açık sayfada tutulur, hastaneye gönderilmez. Sayfa yenilendiğinde silinir.</p>
-  <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. Gerçek hasta bilgisi kullanmayın.</p>
+  <h2 id="qa-heading">Sesli soru–cevap</h2>
+  <p>Ad-soyad, T.C. kimlik numarası, doğum tarihi, telefon ve tarih-saat zorunludur; soru atlanamaz. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
+  <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
   <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
   <div id="qa-work" hidden>
     <h3 id="qa-question" tabindex="-1"></h3>
@@ -166,22 +167,29 @@ button:disabled{opacity:.55;cursor:default;transform:none}
     </div>
   </div>
   <div id="qa-result" hidden>
-    <h3>Deneme cevapları</h3>
+    <h3>Onaylanan form</h3>
     <p id="qa-summary"></p>
-    <p>Bu özet hastane kaydı, kimlik doğrulaması veya imza yerine geçmez. Son beyan “Onam formunu okudum, anladım, onaylıyorum” olarak gösterilir. Bu deneme elektronik imza veya hastane onam kaydı oluşturmaz.</p>
-    <button class="secondary" id="qa-download">Deneme özetini indir (JSON)</button>
-    <button class="plain" id="qa-clear">Bilgileri sil</button>
+    <p id="qa-save-status" role="status" aria-live="polite"></p>
+    <button class="secondary" id="qa-save-retry" hidden>Kaydetmeyi tekrar dene</button>
+    <div id="qa-receipt" hidden>
+      <h3>Doktor erişim QR kodu</h3>
+      <div id="qa-qr" role="img" aria-label="Onaylanan formu doktor ekranında açan QR kod"></div>
+      <p><a id="qa-record-link">Formu doktor ekranında aç</a></p>
+      <p>Bu QR kişisel bilgilerinizi içermez. Kayıt, yetkili doktor girişiyle açılır.</p>
+    </div>
+    <button class="secondary" id="qa-download">Form özetini indir (JSON)</button>
+    <button class="plain" id="qa-clear">Ekranı temizle</button>
   </div>
 </section>
 
 <section class="panel">
   <h2>Önemli bilgi</h2>
-  <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Sesli soru–cevap bölümü bir denemedir; kimlik doğrulaması, imza veya hastane kaydı oluşturmaz.</p>
+  <p class="notice">Form metni paylaşılan belgeden aktarılmıştır. Sesli beyan, resmi kimlik doğrulaması veya elektronik imza değildir. <a href="doctor.html">Doktor girişi</a></p>
 </section>
 </main>
-<script src="speech-text.js?v=7"></script>
-<script src="audio-join.js?v=7"></script>
-<script src="natural-audio.js?v=7"></script>
+<script src="speech-text.js?v=8"></script>
+<script src="audio-join.js?v=8"></script>
+<script src="natural-audio.js?v=8"></script>
 <script>
 (() => {
  const data = [
@@ -297,7 +305,10 @@ button:disabled{opacity:.55;cursor:default;transform:none}
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="validation.js?v=7"></script>
-<script src="qa.js?v=7"></script>
+<script src="validation.js?v=8"></script>
+<script src="config.js?v=8"></script>
+<script src="records.js?v=8"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="qa.js?v=8"></script>
 </body>
 </html>

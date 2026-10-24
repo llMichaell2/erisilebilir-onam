@@ -40,7 +40,7 @@
   if(key==='phone')return [value.slice(0,1),value.slice(1,4),value.slice(4,7),value.slice(7,9),value.slice(9,11)].flatMap(group=>numberParts(group,true));
   if(key==='birthDate'||key==='dateTime'){
    const [date,time]=value.split(' ');const [day,month,year]=date.split('.');
-   const parts=[...numberParts(day,true),...numberParts(month,true),...numberParts(year)];
+   const parts=[...numberParts(day,true),...numberParts(month,true),...(Number(year)===2005?['iki bin beş']:numberParts(year))];
    if(time){const [hour,minute]=time.split(':');parts.push('saat',...numberParts(hour,true),...numberParts(minute,true))}
    return parts;
   }

@@ -1,7 +1,7 @@
 {
   "provider": "edge",
   "voice": "tr-TR-EmelNeural",
-  "generatedAt": "2026-10-24T12:28:17.678Z",
+  "generatedAt": "2026-10-24T12:46:57.913Z",
   "clips": {
     "1. İşlemin açıklaması. Size önerilen işlem: Bilgisayarlı Tomografi (BT / Tomografi), Manyetik Rezonans Görüntüleme (MR) veya her ikisi.\n\nBT: X-ışınları kullanılarak vücudunuzun kesit halinde görüntülerini alır. Gerektiğinde damardan iyotlu kontrast madde verilebilir.\n\nMR: Güçlü manyetik alan ve radyo dalgaları ile detaylı görüntüler elde edilir. Gerektiğinde gadolinyumlu kontrast madde verilebilir.\n\nBu işlemler, doktorunuzun teşhis koyması veya tedavi planlaması için istenmiştir.": "audio/e22360781c128fc45b056a81.mp3",
     "2. Faydalar. Hastalığınızın tanısını netleştirmek veya mevcut durumu takip etmek.\nAmeliyat / tedavi planlamasına yardımcı olmak.\nDiğer yöntemlere göre daha detaylı görüntü sağlayabilir.": "audio/3f9dd5cdf78708433b6d5ecb.mp3",
@@ -9,8 +9,8 @@
     "4. Alternatif yöntemler. Ultrason, röntgen, klasik tomografi, endoskopi, laboratuvar testleri veya hiç görüntüleme yapmama. Doktorunuz size en uygun olanı önerdi.": "audio/011536e65b4aa745524ea2f5.mp3",
     "5. Önemli uyarılar. Hamilelik ihtimaliniz varsa mutlaka söyleyin.\nBöbrek yetmezliği, alerji öyküsü, astım, kalp pili, metal protez, dövme, piercing varsa lütfen belirtin.\nMR’da tüm metal eşyalarınızı (saat, kolye, kredi kartı vb.) çıkaracaksınız.\nKontrast verilecekse 4–6 saat aç kalmanız istenebilir.": "audio/9f32db46525376f35a96fcd7.mp3",
     "6. Onam beyanı. Yukarıdaki tüm bilgileri okudum, anladım ve sorularım cevaplandı.\nİşlemin faydalarını ve risklerini kabul ediyorum.\nGerektiğinde kontrast madde verilmesini onaylıyorum.\nİstediğim zaman onamı geri çekebileceğimi biliyorum.": "audio/1632f44b05c1c40bd9be6c4e.mp3",
-    "Adınız ve soyadınız nedir? Deneme için hayali bir ad ve soyad söyleyin.": "audio/801814635218861afb351362.mp3",
-    "On bir haneli T.C. kimlik numaranız nedir? Rakamları tek tek söyleyin. Denemede gerçek kişisel bilgi kullanmayın.": "audio/11c18da99fc487536b9e984c.mp3",
+    "Adınız ve soyadınız nedir?": "audio/eef583cd90e420c1f5bc8550.mp3",
+    "On bir haneli T.C. kimlik numaranız nedir? Rakamları tek tek söyleyin.": "audio/eeb54b416ff33a637711669a.mp3",
     "Doğum tarihiniz nedir? Gün, ay ve dört haneli yıl olarak söyleyin veya yazın.": "audio/248797dd4f3500ab2669cb97.mp3",
     "Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.": "audio/2f0bffe9af1f95a9e36966b0.mp3",
     "Form için tarih ve saati kontrol edin. Cihazınızın yerel tarih ve saati önerildi. Değiştirebilir veya doğrulayabilirsiniz.": "audio/b0a86102803b7920d92c4a45.mp3",
@@ -35,11 +35,12 @@
     "Tarih ve saat için cevabınız:": "audio/2a9cb9b7f7b8a344bead7b91.mp3",
     "Bilgilerim doğru veya düzelteceğim diyebilirsiniz.": "audio/178d389c84d2bbcb6b3546f1.mp3",
     "Beyanınız: Onam formunu okudum, anladım, onaylıyorum. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.": "audio/9307d07cecd39c7a48da23a7.mp3",
-    "Son beyanınız alındı. Deneme tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.": "audio/78b996a9da644ab0c6887b27.mp3",
+    "Son beyanınız alındı. İşlem tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.": "audio/10ac9e6d7fc0ee03581400e7.mp3",
     "Onay vermediniz. Beyan tamamlanmadı.": "audio/b74ac9ca1a5382c9ce2e8848.mp3",
     "Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.": "audio/182df614f48f487810241e0a.mp3",
     "Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.": "audio/d64d1ca32f7b506c21b2ca3e.mp3",
     "Ad ve soyadı birlikte girin.": "audio/470092f2dd46b526618595ad.mp3",
+    "Son beyanınız alındı. İşlem tamamlandı.": "audio/cfb737a42cde82a079eeaf0e.mp3",
     "on": "audio/92b14f6c74b13abd3bb65364.mp3",
     "on bir": "audio/2b3c44d5fa0150c8c829a739.mp3",
     "on iki": "audio/d298b55d1eb303cc90ac5a07.mp3",
@@ -158,6 +159,7 @@
     "yedi bin": "audio/b24022e0a042d1bc2d12f5c8.mp3",
     "sekiz bin": "audio/bbc05541cbbf5442923f99d9.mp3",
     "dokuz bin": "audio/0b5b5097ff17fec17a719319.mp3",
-    "saat": "audio/ea1576e8909fcbb7e08fea28.mp3"
+    "saat": "audio/ea1576e8909fcbb7e08fea28.mp3",
+    "iki bin beş": "audio/49520fcb3255f3f1a93b5158.mp3"
   }
 }

@@ -18,11 +18,12 @@
   "confirm": "Bilgilerim doğru veya düzelteceğim diyebilirsiniz.",
   "messages": [
     "Beyanınız: Onam formunu okudum, anladım, onaylıyorum. Tamamlamak için aynı cümleyi tekrar söyleyebilir veya Beyanımı tamamla düğmesine basabilirsiniz.",
-    "Son beyanınız alındı. Deneme tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.",
+    "Son beyanınız alındı. İşlem tamamlandı. Bilgileriniz yalnızca bu açık sayfada tutuluyor.",
     "Onay vermediniz. Beyan tamamlanmadı.",
     "Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.",
     "Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.",
-    "Ad ve soyadı birlikte girin."
+    "Ad ve soyadı birlikte girin.",
+    "Son beyanınız alındı. İşlem tamamlandı."
   ],
   "numberPhrases": [
     "on",
@@ -143,6 +144,7 @@
     "yedi bin",
     "sekiz bin",
     "dokuz bin",
-    "saat"
+    "saat",
+    "iki bin beş"
   ]
 }
