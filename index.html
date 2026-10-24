@@ -71,7 +71,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
 .sections{display:grid;gap:12px;margin-top:16px}
 .section{border:1px solid var(--line);border-radius:17px;padding:18px;background:#fbfdfd;transition:border-color .15s ease,background .15s ease}
 .section h3{font-size:1.08rem;line-height:1.35;margin:0 0 7px;color:#123d47}
-.section p{margin:0 0 13px;color:#2c4651}
+.section p{margin:0 0 13px;color:#2c4651;white-space:pre-line}
 .section-actions{display:flex;flex-wrap:wrap;gap:8px}
 .section-actions button{min-height:48px;font-size:1rem}
 .section.is-active{border:3px solid var(--teal);background:#eaf8f5;padding:16px;box-shadow:0 5px 18px rgba(7,94,99,.09)}
@@ -129,25 +129,50 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var
 
 <section class="panel">
   <h2>📋 Form bölümleri</h2>
-  <p class="muted">Bir bölümü seçerek yalnızca o kısmı dinleyebilirsiniz. Aşağıdaki metinler örnektir; resmî onam metni değildir.</p>
+  <p class="muted">Bir bölümü seçerek yalnızca o kısmı dinleyebilirsiniz. Metinler, paylaşılan BT / MR onam formunun fotoğraflarından aktarılmıştır. Fotoğraflarda işlem seçimi işaretlenmemiştir.</p>
   <div class="sections" id="sections"></div>
+</section>
+
+<section class="panel" aria-labelledby="patient-fields">
+  <h2 id="patient-fields">Formdaki hasta bilgileri ve imza alanları</h2>
+  <p>Hasta bilgileri: Adı soyadı, T.C. kimlik numarası, doğum tarihi, telefon, tarih / saat.</p>
+  <p>Onam alanları: Hasta / vekil adı soyadı, imza ve tarih. İsteğe bağlı tanık adı soyadı ve imza. Doktor / radyolog adı soyadı, imza ve kaşe.</p>
+  <p class="muted">Bu alanlar kaynak formdaki boş alanları gösterir; bu sayfada doldurulmaz veya kaydedilmez. İşlem seçimi ve gerektiğinde kontrast madde kullanımı sağlık ekibiyle netleştirilmelidir.</p>
 </section>
 
 <section class="panel">
   <h2>Önemli bilgi</h2>
-  <p class="notice">Bu çalışma bir prototiptir. Buradaki örnek içerik klinik onam metni olarak kullanılmamalıdır. Gerçek kullanım öncesinde sağlık kuruluşunun onayladığı metin eklenmeli, erişilebilirlik ve gizlilik gereklilikleri uzmanlarca değerlendirilmelidir. Bu sayfa hasta bilgisi toplamaz veya kaydetmez.</p>
+  <p class="notice">Bu çalışma bir prototiptir. Fotoğraflardaki metinler tıbbi içerikleri değiştirilmeden aktarılmıştır; klinik kullanım öncesinde sağlık kuruluşu tarafından doğrulanmalıdır. Altıncı bölümün dinlenmesi onam verildiği anlamına gelmez. Bu sürüm sesli yanıt, kimlik doğrulama, imza veya hasta kaydı almaz.</p>
 </section>
 </main>
 <script>
 (() => {
  const data = [
-  {title:"1. Hasta bilgileri", text:"Bu bölüm, hastanın kimlik ve iletişim bilgileri için ayrılmıştır. Bu prototipte gerçek kişisel bilgi istenmemektedir."},
-  {title:"2. İşlemin amacı ve niteliği", text:"Bu bölümde yapılması planlanan işlem, neden önerildiği ve genel olarak nasıl uygulanacağı açıklanmalıdır. Kurum tarafından onaylanmış işlem açıklaması buraya eklenmelidir."},
-  {title:"3. Beklenen yararlar", text:"Bu bölümde işlemin beklenen yararları sade ve anlaşılır bir dille açıklanmalıdır. İçerik, ilgili sağlık kuruluşunun onaylı formundan alınmalıdır."},
-  {title:"4. Olası riskler ve yan etkiler", text:"Bu bölümde işlemle ilişkili önemli riskler, olası yan etkiler ve komplikasyonlar eksiksiz şekilde açıklanmalıdır. Örnek metin gerçek kullanım için yeterli değildir."},
-  {title:"5. Alternatifler ve işlemi reddetme", text:"Bu bölümde varsa alternatif yöntemler, işlemi yaptırmamanın olası sonuçları ve hastanın soru sorma hakkı açıklanmalıdır."},
-  {title:"6. Sorular ve gönüllü karar", text:"Hastanın soru sorma fırsatı olduğu ve kararını baskı altında kalmadan verebilmesi gerektiği açıklanmalıdır. Sesli okuma, hastanın anlamasını veya onam verdiğini tek başına kanıtlamaz."}
- ];
+  {
+    "title": "1. İşlemin açıklaması",
+    "text": "Size önerilen işlem: Bilgisayarlı Tomografi (BT / Tomografi), Manyetik Rezonans Görüntüleme (MR) veya her ikisi.\n\nBT: X-ışınları kullanılarak vücudunuzun kesit halinde görüntülerini alır. Gerektiğinde damardan iyotlu kontrast madde verilebilir.\n\nMR: Güçlü manyetik alan ve radyo dalgaları ile detaylı görüntüler elde edilir. Gerektiğinde gadolinyumlu kontrast madde verilebilir.\n\nBu işlemler, doktorunuzun teşhis koyması veya tedavi planlaması için istenmiştir."
+  },
+  {
+    "title": "2. Faydalar",
+    "text": "Hastalığınızın tanısını netleştirmek veya mevcut durumu takip etmek.\nAmeliyat / tedavi planlamasına yardımcı olmak.\nDiğer yöntemlere göre daha detaylı görüntü sağlayabilir."
+  },
+  {
+    "title": "3. Riskler ve oluşabilecek yan etkiler",
+    "text": "Genel oranlar yaklaşık değerlerdir.\n\nBT için:\nRadyasyon maruziyeti (kanser riskini çok az arttırır, özellikle tekrarlayan çekimlerde).\nKontrast alerjisi (kaşıntı, döküntü, nadiren ağır reaksiyon %0,01–0,1).\nBöbrek fonksiyonlarında geçici bozulma (kontrast verilirse).\nGebelikte kullanılmaz (bebeğe zarar verebilir).\n\nMR için:\nManyetik alan nedeniyle metal implant, kalp pili, kulak içi cihaz, metal parça olan kişilerde yasaktır (hayati tehlike yaratabilir).\nKlostrofobi (kapalı alanda panik) – %5–10 oranında.\nKontrast alerjisi (çok nadir, %0,01).\nGürültü (kulak tıkacı verilir).\nHamilelikte ilk 3 ay önerilmez (doktor onayı şart).\n\nOrtak riskler:\nDamar yolu açılmasına bağlı morarma, enfeksiyon.\nÇok nadir anafilaktik şok (ölümcül olabilir, acil müdahale gerektirir)."
+  },
+  {
+    "title": "4. Alternatif yöntemler",
+    "text": "Ultrason, röntgen, klasik tomografi, endoskopi, laboratuvar testleri veya hiç görüntüleme yapmama. Doktorunuz size en uygun olanı önerdi."
+  },
+  {
+    "title": "5. Önemli uyarılar",
+    "text": "Hamilelik ihtimaliniz varsa mutlaka söyleyin.\nBöbrek yetmezliği, alerji öyküsü, astım, kalp pili, metal protez, dövme, piercing varsa lütfen belirtin.\nMR’da tüm metal eşyalarınızı (saat, kolye, kredi kartı vb.) çıkaracaksınız.\nKontrast verilecekse 4–6 saat aç kalmanız istenebilir."
+  },
+  {
+    "title": "6. Onam beyanı",
+    "text": "Yukarıdaki tüm bilgileri okudum, anladım ve sorularım cevaplandı.\nİşlemin faydalarını ve risklerini kabul ediyorum.\nGerektiğinde kontrast madde verilmesini onaylıyorum.\nİstediğim zaman onamı geri çekebileceğimi biliyorum."
+  }
+];
  const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
  const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
  let index=0, rate=1, queue=[], queuePos=0, isReading=false;
