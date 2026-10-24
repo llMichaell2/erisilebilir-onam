@@ -3,6 +3,7 @@
  const $=id=>document.getElementById('qa-'+id);
  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
  const V=window.OnamValidation;
+ window.onamMicActive=()=>!!recognition;
  const declaration='Onam formunu okudum, anladım, onaylıyorum';
  const questions=[
   {key:'name',label:'Ad soyad',prompt:'Adınız ve soyadınız nedir? Cevabınız bitince tamam deyin.',validate:v=>/^[\p{L}][\p{L}’' -]+\s[\p{L}’' -]+$/u.test(v)?'':'Ad ve soyadı birlikte girin.'},
@@ -42,6 +43,7 @@
  function ask(){
   phase='answer';answerDraft='';candidate='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   const q=questions[step];
+  const answerLabel=document.getElementById('qa-answer-label');if(answerLabel)answerLabel.textContent=q.label+' — cevabınız';
   questionSpeech=q.key==='dateTime'?`Tarih ve saat cihazınızdan alındı: ${V.answerParts('dateTime',$('answer').value).join(' ')}. Doğruysa tamam deyin. Düzeltmek için yeni tarih ve saati söyleyip tamam deyin veya yazın.`:q.prompt;
   $('question').textContent=`Soru ${step+1} / ${questions.length}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';

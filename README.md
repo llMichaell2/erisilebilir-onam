@@ -108,3 +108,11 @@ Hasta altıncı soruda tam beyan cümlesini söyler. Beyanı geri okunduktan son
 ## Sesli başlangıç rehberi
 
 Hasta sayfası açıldığında erişilebilir bir başlangıç penceresi görünür. “Sesli onam formunu başlat” düğmesi kullanıcı dokunuşuyla altı bölümün sırayla okunmasını başlatır; ekran ve klavye odağı okunan bölümün başlığına ilerler. Son bölüm tamamlandığında bilgiler ve son beyan için soru-cevap alanı otomatik açılır. Okuma boyunca sabit kontrollerle duraklatılabilir, devam edilebilir veya durdurulabilir. Durdurma ve tek bölüm okumaya geçme otomatik geçişi iptal eder. “Kendim okuyacağım” veya Escape pencereyi kapatır; o anda kendiliğinden ses çalınmaz. Hareketi azaltma tercihi izlenir.
+
+## Ekran okuyucu ve isteğe bağlı sesli düğme rehberi
+
+Hasta sayfasında başlangıç penceresindeki “Kullanımı sesli anlat” düğmesi ekranın bölümlerini, kontrolleri ve sesli cevap akışını anlatır. “Düğmelerin görevlerini sesli açıkla” seçeneği veya üstteki “Sesli düğme rehberi” düğmesi ek odak anlatımını açıp kapatır. Tab/Shift+Tab ile odaklanılan düğmelerin adı ve görevi okunur. Ekran okuyucu zaten konuşuyorsa ek rehber kapalı tutulabilir; doğal düğme adları, durumları ve aria-describedby açıklamaları ek rehberden bağımsızdır. Mevcut klavye ve ekran okuyucu hareketleri değiştirilmez. Cevap alanının görünür etiketi soruya göre güncellenir.
+
+Ek anlatım form okunurken ve mikrofon açıkken yapılmaz; uygulama okumaya veya dinlemeye geçince önceki rehber sesi iptal edilir. Hasta cevapları veya girilen alan değerleri bu rehber tarafından okunmaz; yalnızca arayüz görevleri anlatılır. Sadece rehberin açık/kapalı tercihi yerel olarak saklanır. Uzun açıklamalar küçük ses parçalarıyla okunur. Başlangıç penceresi, klavye odağı, açıklama bağlantıları, kişisel cevapların ek rehber tarafından okunmaması ve ses çakışmasının engellenmesi Chrome testlerinde denetlenir. Gerçek NVDA/VoiceOver/TalkBack kullanıcı denemesi ve tam WCAG değerlendirmesi ayrıca gerekir.
+
+Etiket ve açıklama yaklaşımı: https://www.w3.org/WAI/tutorials/forms/labels/ ve https://www.w3.org/WAI/tutorials/forms/instructions/.
