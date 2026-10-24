@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'..');
     const file=pathname==='/'?'index.html':pathname.slice(1);
     // Exercise device-speech fallback deterministically; recorded playback has separate checks.
     if(file==='audio/manifest.json')return route.fulfill({contentType:'application/json',body:'{"clips":{}}'});
-    const type=file.endsWith('.js')?'application/javascript':file.endsWith('.json')?'application/json':'text/html';
+    const type=file.endsWith('.css')?'text/css':file.endsWith('.js')?'application/javascript':file.endsWith('.json')?'application/json':'text/html';
     return route.fulfill({contentType:type,body:fs.readFileSync(path.join(root,file),'utf8')});
    });
    await page.addInitScript(({recognition})=>{

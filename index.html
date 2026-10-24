@@ -5,107 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f8fc">
 <title>Onam Formu – Sesli Okuyucu</title>
-<style>
-:root{
-  --bg:#f2f7f7;--card:#ffffff;--ink:#142d3a;--muted:#405966;
-  --teal:#075e63;--teal-dark:#06474c;--mint:#dff5ef;--line:#c9dcdd;
-  --focus:#ffbf47;--shadow:0 12px 32px rgba(12,55,63,.08)
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;background:linear-gradient(180deg,#eaf5f3 0,#f5f8fa 360px,var(--bg) 100%);
-  color:var(--ink);font:18px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif
-}
-main{max-width:980px;margin:0 auto;padding:28px 16px 52px}
-header,.panel{
-  background:var(--card);border:1px solid var(--line);border-radius:24px;
-  padding:26px;margin-bottom:20px;box-shadow:var(--shadow)
-}
-header{
-  position:relative;overflow:hidden;border:0;color:#fff;
-  background:linear-gradient(135deg,#06474c 0%,#08777a 58%,#13958b 100%);
-  padding:clamp(24px,5vw,42px)
-}
-header:after{
-  content:"";position:absolute;width:250px;height:250px;border:1px solid rgba(255,255,255,.18);
-  border-radius:50%;right:-90px;top:-110px;box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.035);
-  pointer-events:none
-}
-header>*{position:relative;z-index:1}
-.eyebrow{
-  display:inline-block;font-size:.9rem;font-weight:800;letter-spacing:.04em;
-  color:#e0fffa;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);
-  border-radius:999px;padding:6px 12px;margin:0 0 16px
-}
-h1{font-size:clamp(1.85rem,5vw,3rem);line-height:1.12;letter-spacing:-.035em;margin:0 0 12px;max-width:680px}
-header>p:not(.eyebrow){max-width:650px;color:#effffb;margin:0 0 12px}
-h2{font-size:1.35rem;line-height:1.3;margin:0 0 8px;letter-spacing:-.015em}
-p{margin:8px 0 14px}
-.muted{color:var(--muted);font-size:1rem}
-.progress-row{display:flex;justify-content:space-between;gap:12px;font-weight:800;margin-top:24px}
-progress{display:block;width:100%;height:14px;margin:9px 0 0;accent-color:#b9fff0;border-radius:99px;overflow:hidden}
-progress::-webkit-progress-bar{background:rgba(255,255,255,.22);border-radius:99px}
-progress::-webkit-progress-value{background:#b9fff0;border-radius:99px}
-progress::-moz-progress-bar{background:#b9fff0;border-radius:99px}
-.now{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);border-radius:18px;padding:16px 18px;margin-top:18px}
-#currentTitle{font-weight:850;margin-bottom:5px;color:#d7fff6}
-#currentText{font-size:1.05rem;color:#fff}
-.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-button{
-  font:inherit;font-weight:800;min-height:58px;border:2px solid transparent;border-radius:15px;
-  padding:12px 15px;cursor:pointer;transition:transform .15s ease,background-color .15s ease,border-color .15s ease
-}
-button:hover{transform:translateY(-1px)}
-button:active{transform:translateY(0)}
-button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--focus);outline-offset:3px}
-.primary{background:#e0fff6;color:#06474c;border-color:#e0fff6}
-.primary:hover{background:#fff;border-color:#fff}
-.qa-shortcut{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 18px;border-radius:15px;margin-top:18px}
-.secondary{background:var(--mint);color:#06474c;border-color:#b7e4dc}
-.secondary:hover{background:#c9f0e7;border-color:#8ed7ca}
-.plain{background:#fff;border-color:var(--line);color:var(--ink)}
-.panel h2:before{content:"";display:inline-block;width:5px;height:1.05em;background:#0b8580;border-radius:8px;margin-right:10px;vertical-align:-.12em}
-.speed-list{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
-.speed{min-width:78px;min-height:52px}
-.speed[aria-pressed="true"]{background:var(--teal);color:#fff;border-color:var(--teal)}
-.sections{display:grid;gap:12px;margin-top:16px}
-.section{border:1px solid var(--line);border-radius:17px;padding:18px;background:#fbfdfd;transition:border-color .15s ease,background .15s ease}
-.section h3{font-size:1.08rem;line-height:1.35;margin:0 0 7px;color:#123d47}
-.section p{margin:0 0 13px;color:#2c4651;white-space:pre-line}
-.section-actions{display:flex;flex-wrap:wrap;gap:8px}
-.section-actions button{min-height:48px;font-size:1rem}
-.section.is-active{border:3px solid var(--teal);background:#eaf8f5;padding:16px;box-shadow:0 5px 18px rgba(7,94,99,.09)}
-.notice{font-size:.96rem;color:#304b56;background:#f0f7f7;border-left:4px solid #0b8580;border-radius:0 12px 12px 0;padding:14px 16px}
-@media(max-width:600px){
-  main{padding:12px 10px 30px}
-  .panel,header{padding:19px;border-radius:19px;margin-bottom:14px}
-  .controls{grid-template-columns:1fr}
-  .speed{flex:1;min-width:70px}
-  body{font-size:17px}
-}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button{transition:none}button:hover{transform:none}}
-@media(prefers-contrast:more){
-  :root{--line:#52666b;--muted:#1c3037;--bg:#fff}
-  .panel,header{border:2px solid #142d3a}
-  .secondary,.plain,.section{border-width:2px}
-}
-input,select{font:inherit;width:100%;max-width:100%;padding:12px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
-button:disabled{opacity:.55;cursor:default;transform:none}
-[hidden]{display:none!important}
-#qa-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
-#qa-summary{white-space:pre-line;overflow-wrap:anywhere}
-#qa-qr{max-width:300px}#qa-qr svg{display:block;width:100%;height:auto}
-</style>
+<link rel="stylesheet" href="theme.css?v=11">
 </head>
 <body>
-<main>
-<header>
-  <p class="eyebrow">♿ Erişilebilir Sağlık Hizmeti</p>
-  <h1>🔊 Onam Formu Sesli Okuyucu</h1>
+<a class="skip-link" href="#main-content">İçeriğe geç</a>
+<div class="site-bar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O</span><span>Erişilebilir Onam<small>Bilgiyi herkes için erişilebilir kılın</small></span></a><div class="accessibility-bar" aria-label="Görünüm ayarları"><button id="text-size" aria-pressed="false">Aa · Büyük yazı</button><button id="contrast" aria-pressed="false">Yüksek kontrast</button></div></div>
+<p id="display-status" class="sr-only" role="status"></p>
+<main id="main-content">
+<header class="patient-hero">
+  <span class="pill">Sesli okuma ve adım adım doğrulama</span>
+  <h1>Onam formunuzu<br>kendi hızınızda dinleyin.</h1>
   <p>Görme engelli ve okuma güçlüğü yaşayan kişiler için erişilebilir onam formu.</p>
-  <a class="primary qa-shortcut" id="qa-open" href="#qa-panel">🎤 Soru–cevabı başlat</a>
-  <p style="font-size:.85rem;margin-top:8px">Sürüm: Kayıt bağlantısı · 10</p>
+  <div class="hero-actions"><a class="button primary" id="qa-open" href="#qa-panel">Soru–cevabı başlat</a><a class="button" href="#form-sections">Form bölümlerine göz at</a></div>
+
   <div class="progress-row"><span>Okuma ilerlemesi</span><span id="progressLabel">0%</span></div>
   <progress id="progress" value="0" max="100" aria-label="Okuma ilerlemesi">0%</progress>
   <div class="now" aria-live="polite" aria-atomic="true">
@@ -113,19 +25,19 @@ button:disabled{opacity:.55;cursor:default;transform:none}
     <div id="currentText">Başlamak için “Tümünü Oku” düğmesine basın.</div>
   </div>
   <div class="controls">
-    <button class="secondary" id="previous" aria-label="Önceki bölüm">◀ Önceki</button>
-    <button class="primary" id="play">▶ Tümünü Oku</button>
-    <button class="secondary" id="stop">⏹ Durdur</button>
+    <button class="secondary" id="previous" aria-label="Önceki bölüm">Önceki</button>
+    <button class="primary" id="play">Tümünü Oku</button>
+    <button class="secondary" id="stop">Durdur</button>
   </div>
   <div class="controls">
-    <button class="secondary" id="pause">⏸ Duraklat</button>
-    <button class="secondary" id="resume">▶ Devam Et</button>
-    <button class="secondary" id="next">Sonraki ▶</button>
+    <button class="secondary" id="pause">Duraklat</button>
+    <button class="secondary" id="resume">Devam Et</button>
+    <button class="secondary" id="next">Sonraki</button>
   </div>
 </header>
 
 <section class="panel">
-  <h2>Ses ve okuma hızı</h2>
+  <p class="step-label">01 / Dinleme tercihleri</p><h2>Size uygun sesi seçin.</h2>
   <p id="natural-status" role="status">Doğal ses kontrol ediliyor…</p>
   <label for="voice-select">Cevapları geri okuma ve yedek Türkçe ses</label>
   <select id="voice-select"><option value="">Önerilen Türkçe ses</option></select>
@@ -140,14 +52,15 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   </div>
 </section>
 
-<section class="panel">
-  <h2>📋 Form bölümleri</h2>
+<section class="panel" id="form-sections">
+  <p class="step-label">02 / Bilgilendirme</p><h2>Formun altı bölümü</h2>
+  <button class="plain" id="go-current">Okunan bölüme dön</button>
   <p class="muted">Bir bölümü seçerek yalnızca o kısmı dinleyebilirsiniz. Metinler, paylaşılan BT / MR onam formunun fotoğraflarından aktarılmıştır. Fotoğraflarda işlem seçimi işaretlenmemiştir.</p>
   <div class="sections" id="sections"></div>
 </section>
 
 <section class="panel" id="qa-panel" aria-labelledby="qa-heading">
-  <h2 id="qa-heading">Sesli soru–cevap</h2>
+  <p class="step-label">03 / Bilgiler ve beyan</p><h2 id="qa-heading">Birlikte, adım adım tamamlayalım.</h2>
   <p>Ad-soyad, T.C. kimlik numarası, doğum tarihi, telefon ve tarih-saat zorunludur; soru atlanamaz. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
   <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
@@ -183,14 +96,15 @@ button:disabled{opacity:.55;cursor:default;transform:none}
   </div>
 </section>
 
-<section class="panel">
-  <h2>Önemli bilgi</h2>
-  <p class="notice">Form metni paylaşılan belgeden aktarılmıştır. Sesli beyan, resmi kimlik doğrulaması veya elektronik imza değildir. <a href="doctor.html">Sekreter / kayıt ekranı</a></p>
-</section>
+<footer class="page-footer">
+  <h2 class="sr-only">Önemli bilgi</h2>
+  <p class="notice">Form metni paylaşılan belgeden aktarılmıştır. Sesli beyan, resmi kimlik doğrulaması veya elektronik imza değildir.</p>
+  <p class="version">Erişilebilir Onam · 11</p>
+</footer>
 </main>
-<script src="speech-text.js?v=9"></script>
-<script src="audio-join.js?v=9"></script>
-<script src="natural-audio.js?v=9"></script>
+<script src="speech-text.js?v=11"></script>
+<script src="audio-join.js?v=11"></script>
+<script src="natural-audio.js?v=11"></script>
 <script>
 (() => {
  const data = [
@@ -228,7 +142,7 @@ button:disabled{opacity:.55;cursor:default;transform:none}
    const h=document.createElement('h3');h.textContent=item.title;
    const p=document.createElement('p');p.textContent=item.text;
    const actions=document.createElement('div');actions.className='section-actions';
-   const b=document.createElement('button');b.className='secondary';b.textContent='🔊 Bu bölümü oku';b.setAttribute('aria-label',item.title+' bölümünü oku');b.addEventListener('click',()=>readOne(i));
+   const b=document.createElement('button');b.className='secondary';b.textContent='Bu bölümü oku';b.setAttribute('aria-label',item.title+' bölümünü oku');b.addEventListener('click',()=>readOne(i));
    actions.appendChild(b);card.append(h,p,actions);list.appendChild(card);
   });
  }
@@ -306,11 +220,12 @@ button:disabled{opacity:.55;cursor:default;transform:none}
  renderSections();updateCurrent(0);
 })();
 </script>
-<script src="validation.js?v=9"></script>
-<script src="config.js?v=10"></script>
-<script src="records.js?v=9"></script>
+<script src="validation.js?v=11"></script>
+<script src="config.js?v=11"></script>
+<script src="records.js?v=11"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="qr-ui.js?v=9"></script>
-<script src="qa.js?v=9"></script>
+<script src="qr-ui.js?v=11"></script>
+<script src="qa.js?v=11"></script>
+<script src="accessibility.js?v=11"></script>
 </body>
 </html>
