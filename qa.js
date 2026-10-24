@@ -16,7 +16,8 @@
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,'').trim();
  const yes=v=>['evet','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
- function abortMic(){generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
+ let micTimeout=null;
+ function abortMic(){clearTimeout(micTimeout);generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
  fetch('voice-messages.json?v=9').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
@@ -103,25 +104,36 @@
   if(!Recognition||recognition||!['answer','confirm'].includes(phase))return;
   window.onamAudio.stop();
   const token=generation;const expectedPhase=phase;const expectedStep=step;
-  const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=false;rec.interimResults=false;rec.maxAlternatives=1;
-  let resultReceived=false,failed=false;
+  const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=false;rec.interimResults=true;rec.maxAlternatives=1;
+  let resultReceived=false,failed=false,pending='';
   $('listen').disabled=true;$('status').textContent='Mikrofon açılıyor. İzin istenirse izin verin.';
   rec.onstart=()=>{if(token===generation)$('status').textContent='Dinliyorum. Şimdi konuşabilirsiniz.'};
-  rec.onresult=e=>{
+  function acceptTranscript(value){
    if(token!==generation||phase!==expectedPhase||step!==expectedStep)return;
-   resultReceived=true;const value=e.results?.[0]?.[0]?.transcript||'';
+   if(!value.trim())return;resultReceived=true;
    // End recognition before playing the confirmation, preventing microphone echo.
    abortMic();
    if(phase==='confirm'){if(questions[step].final?normalize(value)===normalize(declaration):yes(value))confirm();else if(no(value))correct();else{$('status').textContent='Doğrulama anlaşılmadı. Ekrandaki doğrula veya düzelt düğmesini kullanabilirsiniz.';say($('status').textContent)}}
    else{submit(value)}
+  }
+  rec.onresult=e=>{
+   if(token!==generation||phase!==expectedPhase||step!==expectedStep)return;
+   const results=Array.from(e.results||[]);
+   pending=results.map(r=>r[0]?.transcript||'').join(' ').trim();
+   if(expectedPhase==='answer')$('answer').value=pending;
+   $('status').textContent=pending?'Duyduğum: '+pending:'Dinliyorum. Şimdi konuşabilirsiniz.';
+   if(results.length&&results.every(r=>r.isFinal))acceptTranscript(pending);
   };
   rec.onerror=e=>{
-   if(token!==generation)return;failed=true;
+   if(token!==generation)return;failed=true;clearTimeout(micTimeout);
    const messages={'not-allowed':'Mikrofon izni verilmedi. Chrome site ayarlarından izin verebilir veya cevabınızı yazabilirsiniz.','service-not-allowed':'Konuşma tanıma hizmeti kullanılamıyor. Yazıyla devam edebilirsiniz.','audio-capture':'Mikrofon bulunamadı. Bağlantıyı kontrol edin veya yazıyla devam edin.','no-speech':'Ses duyulmadı. Tekrar deneyin veya cevabınızı yazın.','network':'Konuşma tanıma hizmetine ulaşılamadı. İnterneti kontrol edin veya yazıyla devam edin.','aborted':'Mikrofon durduruldu.'};
    $('status').textContent=messages[e.error]||'Sesli cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.';
   };
-  rec.onend=()=>{if(token!==generation)return;recognition=null;$('listen').disabled=false;if(!resultReceived&&!failed)$('status').textContent='Cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.'};
-  try{rec.start()}catch{recognition=null;$('listen').disabled=false;$('status').textContent='Mikrofon başlatılamadı. Tekrar deneyin veya yazıyla devam edin.'}
+  rec.onend=()=>{if(token!==generation)return;clearTimeout(micTimeout);recognition=null;if(pending&&!failed&&!resultReceived){acceptTranscript(pending);return}$('listen').disabled=false;if(!resultReceived&&!failed)$('status').textContent='Cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.'};
+  try{rec.start();micTimeout=setTimeout(()=>{
+   if(token!==generation)return;
+   abortMic();$('status').textContent='Konuşma tanıma sonucu gelmedi. Mikrofonla cevap ver düğmesiyle tekrar deneyin. Telefonun mikrofon iznini ve sesle yazma ayarlarını kontrol edin veya yazıyla devam edin.';
+  },25000)}catch{recognition=null;$('listen').disabled=false;$('status').textContent='Mikrofon başlatılamadı. Tekrar deneyin veya yazıyla devam edin.'}
  }
  $('start').onclick=()=>{reset();$('start').hidden=true;$('work').hidden=false;ask()};
  $('open').onclick=()=>{if(phase==='idle')$('start').click();document.getElementById('qa-panel').scrollIntoView({block:'start'})};
