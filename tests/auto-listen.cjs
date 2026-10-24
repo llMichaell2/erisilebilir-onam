@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:true,disabled:false,focus(){},scrollIntoView(){},replaceChildren(){},removeAttribute(){}});return elements.get(id)};
 const events={};let done,mic,starts=0;
-const window={OnamValidation:{tc:v=>v==='10000000146'?v:null,birth:v=>v,phone:v=>v,dateTime:v=>v,localNow:()=> '24.10.2026 14:30',answerParts:(k,v)=>[v]},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(message,callback){done=callback}},OnamRecords:{createKey:()=>'a'.repeat(64),submit:async()=>{throw Error('Mock: no live save')}}};
+const window={OnamValidation:{tc:v=>v==='10000000146'?v:null,birth:v=>v,phone:v=>v,dateTime:v=>v,localNow:()=> '24.10.2026 14:30',answerParts:(k,v)=>[v]},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(message,callback){done=callback}},OnamRecords:{createKey:()=>'a'.repeat(64),submit:async report=>{window.lastReport=report;throw Error('Mock: no live save')}}};
 const document={hidden:false,getElementById:el,addEventListener:(k,f)=>events[k]=f};
 const sandbox={window,document,fetch:()=>Promise.resolve({ok:false}),crypto:{randomUUID:()=>'00000000-0000-4000-8000-000000000001'},setTimeout,clearTimeout};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../validation.js'),'utf8'),sandbox);window.OnamValidation=sandbox.OnamValidation;vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../qa.js'),'utf8'),sandbox);
 const result=value=>mic.onresult({results:[Object.assign([{transcript:value}],{isFinal:true})]});
@@ -50,3 +50,11 @@ for(const approval of ['beyanımı tamamla','onaylıyorum']){
  result(approval);assert.equal(el('qa-result').hidden,false);assert.equal(el('qa-work').hidden,true);el('qa-reset').onclick();
 }
 console.log('PASS: final declaration ends with either spoken approval; negative approval does not finish');
+
+for(const spoken of ['Okudum, anladım, onaylıyorum','Onan formunu okudum anladım onaylıyorum','  OKUDUM,ANLADIM,ONAYLIYORUM  ']){
+ goToDate();result('tamam');done();result(spoken);assert.equal(el('qa-confirm').hidden,false);assert.equal(el('qa-answer').value,'Onam formunu okudum, anladım, onaylıyorum');done();result('onaylıyorum');assert.equal(el('qa-result').hidden,false);assert.equal(window.lastReport.answers.declaration.spokenDeclaration,spoken.trim());el('qa-reset').onclick();
+}
+for(const refused of ['Okudum anladım onaylamıyorum','Okudum anlamadım onaylıyorum','Onan formunu okudum anladım onaylamıyorum','Okudum anladım tamam']){
+ goToDate();result('tamam');done();result(refused);assert.equal(el('qa-confirm').hidden,true);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();
+}
+console.log('PASS: short declaration, onan spelling and punctuation variants accepted with full readback; negative/incomplete phrases rejected; original spoken declaration retained');
