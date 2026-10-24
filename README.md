@@ -118,3 +118,13 @@ Ek odak anlatımı ve ayrı kullanım anlatımı düğmeleri kaldırılmıştır
 ## Kısa ve farklı tanınan son beyan
 
 İlk beyan cevabında “Okudum, anladım, onaylıyorum” da kabul edilir. “Onan formunu okudum, anladım, onaylıyorum” ifadesi konuşma tanımanın onam/onan farklılığı olarak eşleştirilir. Eşleştirme yalnızca bu tam olumlu cümleler için yapılır; eksik ifadeler, anlamadım ve onaylamıyorum kabul edilmez. Sistem standart tam beyanı geri okur ve son onayı ayrıca alır. Standart beyanla birlikte ilk söylenen ifade answers.declaration.spokenDeclaration içinde korunur. Sunucu şeması değişmez.
+
+## Kent yönetim ekranı, arşiv ve Windows uygulaması
+
+Yönetim ekranı İstanbul Kent Üniversitesi öğrenci projesi temasıyla yenilendi. Resmî görsel kaynakları assets/README.md içinde belirtilir. e-Nabız veya üniversitenin resmî sistemi değildir.
+
+Mevcut kurulumun üzerine database/archive-admin.sql dosyasını Supabase SQL Editor'da çalıştırın. Kayıt seçimi, arşive alma ve arşivden geri alma açılır. Arşivleme consent_records veya onam_receipts satırlarını silmez/değiştirmez; aynı hasta QR kodu aynı formu açmaya devam eder. Personel kimliği ve zamanıyla arşiv/geri alma olayları ayrı, doğrudan erişime kapalı tablolarda tutulur. İşlem yalnızca onam_doctors yetkili hesaplarına açıktır. Eski kurulumda listeler çalışır; arşiv işlevi kurulum mesajıyla pasif kalır. Her görünüm son 100 kaydı getirir.
+
+Windows uygulamasının C# kaynakları ve derleme komutu desktop/ altında bulunur. WebView2 tabanlı uygulama aynı Supabase'e bağlanır; açık oturumda liste 15 saniyede bir yenilenir. Internet ve Windows x64/WebView2 gerekir. Uygulama dosyaları birlikte dağıtılır; test paketi kod imzalı değildir. config.js içindeki publicSiteUrl, masaüstünde QR adresinin yerel bilgisayar alan adına dönüşmesini önler. Web kullanıcıları aynı genel belge adresini kullanır.
+
+Kontroller: tests/archive-admin.cjs gerçek PostgreSQL motoruyla arşivleme/geri alma, kimlik/yetki, değişmeyen hasta QR/form içeriği, audit olayları ve atomik hataları sınar. tests/admin-archive-browser.cjs seçim/onay/iptal, aynı QR, geri alma, eski SQL'ye geçiş ve responsive düzeni taklit HTTP ile sınar. Windows EXE yerel açılış testinde giriş ekranı ve Windows uygulaması etiketi doğrulanır; gerçek kullanıcı şifresiyle giriş veya canlı hasta verisi değişikliği yapılmaz.

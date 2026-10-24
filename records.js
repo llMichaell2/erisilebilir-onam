@@ -2,7 +2,7 @@
  const config=window.ONAM_CONFIG||{};
  const configured=!!config.supabaseUrl&&!!config.supabaseKey;
  const base=(config.supabaseUrl||'').replace(/\/$/,'');
- const siteBase=new URL('.',document.currentScript.src);
+ const siteBase=new URL(config.publicSiteUrl||'.',document.currentScript.src);
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  async function request(path,{token,body,method='GET'}={}){
   if(!configured)throw Error('Kayıt bağlantısı henüz ayarlanmadı. Form bu açık sayfada duruyor; özeti indirebilirsiniz.');
@@ -10,7 +10,7 @@
   const headers={apikey:config.supabaseKey};if(token)headers.Authorization='Bearer '+token;
   if(body)headers['Content-Type']='application/json';
   let response;try{response=await fetch(base+path,{method,headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)})}catch{throw Error('Kayıt servisine ulaşılamadı. İnternet bağlantısını kontrol edip tekrar deneyin.')}
-  if(!response.ok){if(response.status===401||response.status===403)throw Error('Giriş veya erişim yetkisi doğrulanamadı.');throw Error('İşlem tamamlanamadı. Bilgileri ve kayıt bağlantısını kontrol edin.')}
+  if(!response.ok){let details={};try{details=await response.json()}catch{};const error=Error(response.status===401||response.status===403?'Giriş veya erişim yetkisi doğrulanamadı.':'İşlem tamamlanamadı. Bilgileri ve kayıt bağlantısını kontrol edin.');error.status=response.status;error.code=details.code;throw error}
   if(response.status===204)return null;return response.json();
  }
  const isKey=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
@@ -24,6 +24,20 @@
   },
   refreshSession:refreshToken=>request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:refreshToken}}),
   logout:token=>request('/auth/v1/logout?scope=local',{method:'POST',token}),
-  async listAuthenticated(token){const result=await request('/rest/v1/rpc/list_onam_receipts_authenticated',{method:'POST',token,body:{}});if(!result||!Array.isArray(result.records))throw Error('Bu hesabın kayıtları görüntüleme yetkisi yok.');return result.records}
+  async listAuthenticated(token,archived=false){
+   let result;
+   try{result=await request('/rest/v1/rpc/list_onam_receipts_v2',{method:'POST',token,body:{p_archived:archived}})}catch(error){
+    if(error.status!==404||!['PGRST202','42883'].includes(error.code))throw error;
+    const legacy=await request('/rest/v1/rpc/list_onam_receipts_authenticated',{method:'POST',token,body:{}});
+    if(!legacy||!Array.isArray(legacy.records))throw Error('Bu hesabın kayıtları görüntüleme yetkisi yok.');
+    result={records:archived?[]:legacy.records,active_count:legacy.records.length,archived_count:0,archive_enabled:false};
+   }
+   if(!result||!Array.isArray(result.records))throw Error('Bu hesabın kayıtları görüntüleme yetkisi yok.');return result;
+  },
+  async setArchive(token,ids,archived){
+   if(!Array.isArray(ids)||!ids.length||ids.length>100||ids.some(id=>!uuid.test(id))||typeof archived!=='boolean')throw Error('Geçerli kayıtları seçin.');
+   const result=await request('/rest/v1/rpc/set_onam_archive',{method:'POST',token,body:{p_record_ids:ids,p_archived:archived}});
+   if(!result||!Number.isInteger(result.changed))throw Error('Arşiv işlemi doğrulanamadı. Listeyi yenileyin.');return result;
+  }
  };
 })();

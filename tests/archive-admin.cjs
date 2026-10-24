@@ -1,0 +1,21 @@
+const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema public to anon,authenticated;`);
+ for(const file of ['setup.sql','qr-access.sql','password-admin.sql','archive-admin.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../database',file),'utf8'));
+ const staff='00000000-0000-4000-8000-000000000011',other='00000000-0000-4000-8000-000000000012';await db.query('insert into auth.users values($1),($2)',[staff,other]);await db.query('insert into public.onam_doctors values($1)',[staff]);
+ const answers=Object.fromEntries(Object.entries({name:'Test Hasta',tc:'10000000146',birthDate:'05.10.2005',phone:'05381234567',dateTime:'25.10.2026 14:30',declaration:'Onam formunu okudum, anladım, onaylıyorum'}).map(([key,value])=>[key,{value}]));const key='a'.repeat(64);
+ await db.exec('set role anon');const id=(await db.query("select public.submit_consent('00000000-0000-4000-8000-000000000001','bt-mr-photo-v1',$1::jsonb,$2) as id",[JSON.stringify(answers),key])).rows[0].id;
+ const before=(await db.query('select public.get_consent_by_token($1) as r',[key])).rows[0].r;
+ await assert.rejects(db.query('select public.set_onam_archive($1,true)',[[id]]),/permission denied/);await db.exec('set role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[other]);await assert.rejects(db.query('select public.set_onam_archive($1,true)',[[id]]),/Staff access/);
+ await db.query("select set_config('request.jwt.claim.sub',$1,false)",[staff]);
+ assert.equal((await db.query('select public.set_onam_archive($1,true) as r',[[id,id]])).rows[0].r.changed,1);
+ assert.equal((await db.query('select public.set_onam_archive($1,true) as r',[[id]])).rows[0].r.changed,0);
+ let active=(await db.query('select public.list_onam_receipts_v2(false) as r')).rows[0].r,archive=(await db.query('select public.list_onam_receipts_v2(true) as r')).rows[0].r;
+ assert.equal(active.records.length,0);assert.equal(archive.records.length,1);assert.equal(archive.records[0].access_token,key);assert.equal(archive.records[0].archived_by,staff);assert.equal(archive.archived_count,1);
+ await assert.rejects(db.query('delete from public.consent_records'),/permission denied/);await assert.rejects(db.query('delete from public.onam_archive_events'),/permission denied/);await assert.rejects(db.query('select public.set_onam_archive($1,true)',[[id,'00000000-0000-4000-8000-000000000099']]),/Record not found/);
+ await db.exec('set role anon');assert.deepEqual((await db.query('select public.get_consent_by_token($1) as r',[key])).rows[0].r,before);
+ await db.exec('reset role');assert.equal((await db.query('select count(*)::int as n from public.onam_archive_events')).rows[0].n,1);await db.exec(fs.readFileSync(path.join(__dirname,'../database/archive-admin.sql'),'utf8'));
+ await db.exec('set role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[staff]);assert.equal((await db.query('select public.set_onam_archive($1,false) as r',[[id]])).rows[0].r.changed,1);active=(await db.query('select public.list_onam_receipts_v2(false) as r')).rows[0].r;assert.equal(active.records.length,1);assert.equal(active.archived_count,0);
+ await db.exec('reset role');assert.equal((await db.query('select count(*)::int as n from public.onam_archive_events')).rows[0].n,2);
+ console.log('PASS: archive/restore, unchanged patient QR and form, audit actor/time, staff-only writes, inaccessible audit tables, idempotence, atomic invalid selection, repeat migration');
+ }finally{await db.close()}})().catch(error=>{console.error(error);process.exit(1)});
