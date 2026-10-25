@@ -59,6 +59,17 @@ for(const refused of ['Okudum anladım onaylamıyorum','Okudum anlamadım onayl�
 }
 console.log('PASS: short declaration, onan spelling and punctuation variants accepted with full readback; negative/incomplete phrases rejected; original spoken declaration retained');
 goToDate();const autoTime=el('qa-date-value').textContent;result('doğru doğru');assert.equal(el('qa-date-value').textContent,autoTime);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();console.log('PASS: repeated approval cannot erase automatic time or complete declaration');
+// Regressions for the patient screenshot: a leading approval and repeated words.
+for(const spoken of ['Onaylıyorum Okudum anladım Onaylıyorum','Onaylıyorum onaylıyorum okudum anladım onaylıyorum','Okudum okudum anladım anladım onaylıyorum onaylıyorum','Okudum anladım onaylıyorum okudum anladım onaylıyorum']){
+ goToDate();result(spoken);assert.equal(el('qa-confirm').hidden,false,spoken);assert.equal(el('qa-answer').value,'Onam formunu okudum, anladım, onaylıyorum');done();result('onaylıyorum onaylıyorum');assert.equal(el('qa-result').hidden,false);assert.equal(window.lastReport.answers.declaration.spokenDeclaration,spoken);el('qa-reset').onclick();
+}
+for(const text of ['Onaylıyorum okudum anlamadım onaylıyorum','Okudum anladım onaylıyorum hayır','Okudum anladım onaylıyorum onaylamıyorum','Okudum anladım onaylıyorum ama kabul etmiyorum','Okudum anladım onaylıyorum mu','Okudum anladım onaylıyorum değil']){
+ goToDate();result(text);assert.equal(el('qa-confirm').hidden,true,text);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();
+}
+goToDate();result('onaylıyorum');assert.equal(el('qa-confirm').hidden,true);assert.match(el('qa-status').textContent,/okudum, anladım, onaylıyorum/);done();result('okudum');assert.equal(el('qa-confirm').hidden,true);mic.onresult({results:[final('okudum'),final('anladım onaylıyorum')]});assert.equal(el('qa-confirm').hidden,false);el('qa-reset').onclick();
+goToDate();result('başka bir şey');assert.match(el('qa-status').textContent,/Beyan tamamlanmadı/);done();result('Okudum anladım onaylıyorum');assert.equal(el('qa-confirm').hidden,false);el('qa-reset').onclick();
+console.log('PASS: leading/repeated positive clauses accepted with separate final approval; incomplete/negative/ambiguous phrases blocked; invalid attempts get immediate guidance and clean retry');
+goToDate();result('Onaylıyorum Okudum');assert.equal(el('qa-confirm').hidden,true);mic.onresult({results:[final('Onaylıyorum Okudum'),final('anladım Onaylıyorum')]});assert.equal(el('qa-confirm').hidden,false);el('qa-reset').onclick();console.log('PASS: screenshot phrase also accepted across separate recognition results');
 (async()=>{
  goToDate();result('Okudum anladım onaylıyorum');done();result('onaylıyorum');
  let complete;window.OnamPDF={create:()=>new Promise(resolve=>{complete=resolve})};sandbox.structuredClone=structuredClone;

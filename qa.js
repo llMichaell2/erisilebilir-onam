@@ -14,10 +14,20 @@
   {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
  let editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
- const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,' ').replace(/\s+/g,' ').trim();
+ const normalize=v=>v.toLocaleLowerCase('tr-TR').normalize('NFC').replace(/[\p{P}]/gu,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
- const matchesDeclaration=v=>[declaration,'Onan formunu okudum, anladım, onaylıyorum','Okudum, anladım, onaylıyorum'].some(text=>normalize(text)===normalize(v));
- const finishApproval=v=>['beyanımı tamamla','onaylıyorum'].includes(normalize(v))||matchesDeclaration(v);
+ // Match only complete positive clauses; tolerate repetition, never ignore unknown/negative words.
+ const declarationClause='(?:(?:onam|onan) formunu )?okudum(?: okudum)* anladım(?: anladım)* onaylıyorum(?: onaylıyorum)*';
+ const declarationPattern=new RegExp('^(?:onaylıyorum )*'+declarationClause+'(?: '+declarationClause+')*$','u');
+ const matchesDeclaration=v=>declarationPattern.test(normalize(v));
+ const approvalOnly=v=>/^onaylıyorum(?: onaylıyorum)*$/u.test(normalize(v));
+ const declarationCanContinue=v=>{
+  const words=normalize(v).split(' ').filter((word,i,all)=>i===0||word!==all[i-1]);
+  while(words.length>1&&words[0]==='onaylıyorum')words.shift();
+  const text=words.join(' ');
+  return ['onam','onan','onam formunu','onan formunu','okudum','okudum anladım','onam formunu okudum','onan formunu okudum','onam formunu okudum anladım','onan formunu okudum anladım'].includes(text);
+ };
+ const finishApproval=v=>normalize(v)==='beyanımı tamamla'||approvalOnly(v)||matchesDeclaration(v);
  const no=v=>['hayır','yanlış','hayır yanlış','düzelteceğim'].includes(normalize(v));
  let micTimeout=null,restartTimer=null,answerDraft='';
  const collectingAnswer=()=>phase==='answer';
@@ -154,7 +164,7 @@
     if(q.key==='dateTime'&&yes(pending)){acceptTranscript(pending);return}
     if(finished){if(!value){prefix='';resultOffset=results.length;answerDraft='';pending='';$('answer').value='';$('status').textContent='Cevap alınamadı. Önce cevabınızı söyleyin, sonra tamam deyin.';return}acceptTranscript(value);return}
         if(q.final){
-     if(matchesDeclaration(value)||yes(value)||/onaylamıyorum|kabul etmiyorum|anlamadım|hayır/.test(normalize(value)))acceptTranscript(value);
+     if(matchesDeclaration(value)||approvalOnly(value)||yes(value)||!declarationCanContinue(value))acceptTranscript(value);
      else $('status').textContent='Duyduğum: '+pending+'. Beyanın devamını söyleyebilirsiniz.';
      return;
     }

@@ -30,3 +30,5 @@ Chrome bilgisayar, Chrome Android ve Safari iPhone üzerinde ayrı ayrı deneyin
 Tarayıcının Türkçe konuşma tanıma hizmetindeki ağ/kullanılabilirlik sorunlarını uygulama ortadan kaldıramaz. Gerçek hasta bilgileri yerine test verileri kullanın.
 
 Tarih-saat otomatik doldurulur; soru akışı beş sorudur. Gerekirse son beyandan önce “Tarih ve saati düzelt” düğmesiyle tarih-saat düzenlenip doğrulanır. “Doğru doğru” gibi tekrarlar otomatik tarihi silmez ve son beyan yerine geçmez.
+
+Son beyanda başlangıçta veya cümle içinde tekrarlanan olumlu sözcükler kabul edilir; örneğin “Onaylıyorum okudum anladım onaylıyorum”. Okudum–anladım–onaylıyorum sırası ve ayrı son doğrulama gerekir. Yalnızca “onaylıyorum” ilk aşamada yeterli değildir; tam beyan yeniden istenir. Olumsuz veya ek belirsiz sözcükler içeren cümleler kabul edilmez. Tamamlanmamış geçerli cümleler biriktirilir; geçersiz denemede açıklama yapılıp temiz bir denemeye geçilir.
