@@ -13,7 +13,7 @@
   {key:'dateTime',label:'Tarih ve saat',prompt:'Tarih ve saat cihazınızdan otomatik alınır. Kabul etmek için tamam deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
   {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
- let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
+ let editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const matchesDeclaration=v=>[declaration,'Onan formunu okudum, anladım, onaylıyorum','Okudum, anladım, onaylıyorum'].some(text=>normalize(text)===normalize(v));
@@ -42,11 +42,15 @@
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
+  let autoDate=false;
+  if(questions[step].key==='dateTime'&&!editingDate){answers.dateTime={value:V.dateTime(V.localNow()),confirmedAt:new Date().toISOString(),source:'device'};step++;autoDate=true}
   phase='answer';answerDraft='';candidate='';spokenDeclaration='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   const q=questions[step];
+  $('date-info').hidden=!answers.dateTime||editingDate;
+  $('date-value').textContent=answers.dateTime?.value||'';
   const answerLabel=document.getElementById('qa-answer-label');if(answerLabel)answerLabel.textContent=q.label+' — cevabınız';
-  questionSpeech=q.key==='dateTime'?`Tarih ve saat cihazınızdan alındı: ${V.answerParts('dateTime',$('answer').value).join(' ')}. Doğruysa tamam deyin. Düzeltmek için yeni tarih ve saati söyleyip tamam deyin veya yazın.`:q.prompt;
-  $('question').textContent=`Soru ${step+1} / ${questions.length}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
+  questionSpeech=q.key==='dateTime'?'Tarih ve saat düzeltme. Yeni tarih ve saati söyleyip tamam deyin veya yazın. Mevcut değeri korumak için tamam diyebilirsiniz.':(autoDate?'Tarih ve saat otomatik kaydedildi. ':'')+q.prompt;
+  $('question').textContent=`${editingDate?'Tarih ve saat düzeltme':'Soru '+(step===5?5:step+1)+' / 5'}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
   controls();$('question').focus();say(questionSpeech);
@@ -80,7 +84,7 @@
  function confirm(){
   if(phase!=='confirm')return;
   abortMic();answers[questions[step].key]={value:candidate,...(questions[step].final?{spokenDeclaration}:{}),confirmedAt:new Date().toISOString()};
-  step++;if(step<questions.length)ask();else finish();
+  editingDate=false;step++;if(step<questions.length)ask();else finish();
  }
  function correct(){if(phase!=='confirm')return;abortMic();ask();$('answer').focus()}
  function finish(){
@@ -107,6 +111,7 @@
  }
  function clearReceipt(){saveGeneration++;pdfGeneration++;pdfBusy=false;$('pdf-status').textContent='';$('download').disabled=false;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
  function reset(){
+  editingDate=false;$('date-info').hidden=true;
   abortMic();clearReceipt();phase='idle';answerDraft='';window.onamAudio.stop();answers={};candidate='';spokenDeclaration='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
   $('work').hidden=true;$('result').hidden=true;$('start').hidden=false;$('start').focus();
@@ -198,6 +203,7 @@
  $('auto').onchange=()=>{if(!$('auto').checked)abortMic()};
  $('answer').oninput=()=>{answerDraft=$('answer').value.trim();abortMic()};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
+ $('date-edit').onclick=()=>{if(!['answer','confirm'].includes(phase)||!answers.dateTime)return;abortMic();editingDate=true;step=4;ask();$('answer').value=answers.dateTime.value};
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questionSpeech,phase==='confirm'?confirmationParts:undefined);
  $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});

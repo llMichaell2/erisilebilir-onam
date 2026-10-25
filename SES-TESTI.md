@@ -28,3 +28,5 @@ Chrome bilgisayar, Chrome Android ve Safari iPhone üzerinde ayrı ayrı deneyin
 6. “Okudum, anladım, onaylıyorum” sonrasında geri okumayı dinleyip “onaylıyorum” deyin. Tamamlanma ve PDF indirmeyi kontrol edin. “Onaylamıyorum” işlemi tamamlamamalı.
 
 Tarayıcının Türkçe konuşma tanıma hizmetindeki ağ/kullanılabilirlik sorunlarını uygulama ortadan kaldıramaz. Gerçek hasta bilgileri yerine test verileri kullanın.
+
+Tarih-saat otomatik doldurulur; soru akışı beş sorudur. Gerekirse son beyandan önce “Tarih ve saati düzelt” düğmesiyle tarih-saat düzenlenip doğrulanır. “Doğru doğru” gibi tekrarlar otomatik tarihi silmez ve son beyan yerine geçmez.

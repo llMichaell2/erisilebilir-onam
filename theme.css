@@ -15,3 +15,11 @@
 .guide-option{display:flex;align-items:flex-start;gap:12px;font-size:1rem}.guide-option input,#qa-auto{width:24px;height:24px;min-width:24px;flex:none;accent-color:var(--teal)}.guide-option input{margin-top:4px}.interface-help{margin-top:0;padding:18px 24px}.interface-help summary{font-weight:750;cursor:pointer;min-height:44px}.interface-help details[open] summary{margin-bottom:16px}.interface-help p{font-size:1rem}.interface-help #interface-guide-status:empty{display:none}summary:focus-visible{outline:4px solid var(--focus);outline-offset:4px}
 
 #welcome-dialog .welcome-actions button{min-height:72px;font-size:1.15rem;touch-action:manipulation}#welcome-audio-note{font-size:.95rem;margin-top:20px;margin-bottom:0}
+/* Clearer patient question card and calm reading surface. */
+html:not(.high-contrast) body:not(.kent-admin){--bg:#f2f5f8;--ink:#182e43;--muted:#4c6072;--teal:#175f62;--teal-dark:#10494c;--line:#d4e0e8;--mint:#edf5f5}
+html:not(.high-contrast) .patient-hero{background:linear-gradient(120deg,#162b4a,#1b414c)}
+#qa-work{border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,28px);margin-top:22px}
+#qa-work #qa-question{font-size:clamp(1.35rem,3vw,1.8rem);line-height:1.4;margin-top:14px}
+#qa-answer{border-width:2px;font-size:1.2rem}
+#qa-date-info{margin-bottom:20px}#qa-date-info p{margin-bottom:10px}
+@media(max-width:640px){#qa-actions{display:grid;grid-template-columns:1fr}#qa-actions button{width:100%;min-height:56px}#qa-date-info button{width:100%}}

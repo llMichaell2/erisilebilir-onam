@@ -40,26 +40,27 @@ el('qa-reset').onclick();
 el('qa-start').onclick();done();const failedMic=mic;failedMic.onerror({error:'network'});failedMic.onresult({results:[final('Geç Gelen tamam')]});assert.equal(el('qa-answer').value,'');
 el('qa-reset').onclick();console.log('PASS: spoken restart clears earlier fragments; network error invalidates late results');
 const goToDate=()=>{el('qa-start').onclick();for(const value of ['Deneme Hasta','10000000146','05.10.2005','05381234567']){el('qa-answer').value=value;el('qa-submit').onclick();el('qa-confirm').onclick()}done()};
-goToDate();const nowValue=el('qa-answer').value;assert.equal(nowValue,sandbox.OnamValidation.dateTime(sandbox.OnamValidation.localNow()));result('tamam');assert.match(el('qa-question').textContent,/Beyanınız/);el('qa-reset').onclick();
-goToDate();result('yirmi dört ekim iki bin yirmi altı saat on dört dakika otuz tamam');assert.equal(el('qa-answer').value,'24.10.2026 14:30');assert.equal(el('qa-confirm').hidden,false);done();result('tamam');assert.match(el('qa-question').textContent,/Beyanınız/);el('qa-reset').onclick();
-console.log('PASS: current device time accepted with one tamam; spoken correction still requires readback confirmation');
+goToDate();assert.match(el('qa-question').textContent,/Beyanınız/);const nowValue=el('qa-date-value').textContent;assert.equal(nowValue,sandbox.OnamValidation.dateTime(sandbox.OnamValidation.localNow()));result('tamam');assert.match(el('qa-question').textContent,/Beyanınız/);el('qa-reset').onclick();
+goToDate();el('qa-date-edit').onclick();done();result('yirmi dört ekim iki bin yirmi altı saat on dört dakika otuz tamam');assert.equal(el('qa-answer').value,'24.10.2026 14:30');assert.equal(el('qa-confirm').hidden,false);done();result('tamam');assert.match(el('qa-question').textContent,/Beyanınız/);el('qa-reset').onclick();
+console.log('PASS: current device time recorded without approval; spoken correction still requires readback confirmation');
 
 for(const approval of ['beyanımı tamamla','onaylıyorum']){
- goToDate();result('tamam');done();result('Onam formunu okudum anladım onaylıyorum');done();
+ goToDate();result('Onam formunu okudum anladım onaylıyorum');done();
  result('onaylamıyorum');assert.equal(el('qa-result').hidden,true);done();
  result(approval);assert.equal(el('qa-result').hidden,false);assert.equal(el('qa-work').hidden,true);el('qa-reset').onclick();
 }
 console.log('PASS: final declaration ends with either spoken approval; negative approval does not finish');
 
 for(const spoken of ['Okudum, anladım, onaylıyorum','Onan formunu okudum anladım onaylıyorum','  OKUDUM,ANLADIM,ONAYLIYORUM  ']){
- goToDate();result('tamam');done();result(spoken);assert.equal(el('qa-confirm').hidden,false);assert.equal(el('qa-answer').value,'Onam formunu okudum, anladım, onaylıyorum');done();result('onaylıyorum');assert.equal(el('qa-result').hidden,false);assert.equal(window.lastReport.answers.declaration.spokenDeclaration,spoken.trim());el('qa-reset').onclick();
+ goToDate();result(spoken);assert.equal(el('qa-confirm').hidden,false);assert.equal(el('qa-answer').value,'Onam formunu okudum, anladım, onaylıyorum');done();result('onaylıyorum');assert.equal(el('qa-result').hidden,false);assert.equal(window.lastReport.answers.declaration.spokenDeclaration,spoken.trim());el('qa-reset').onclick();
 }
 for(const refused of ['Okudum anladım onaylamıyorum','Okudum anlamadım onaylıyorum','Onan formunu okudum anladım onaylamıyorum','Okudum anladım tamam']){
- goToDate();result('tamam');done();result(refused);assert.equal(el('qa-confirm').hidden,true);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();
+ goToDate();result(refused);assert.equal(el('qa-confirm').hidden,true);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();
 }
 console.log('PASS: short declaration, onan spelling and punctuation variants accepted with full readback; negative/incomplete phrases rejected; original spoken declaration retained');
+goToDate();const autoTime=el('qa-date-value').textContent;result('doğru doğru');assert.equal(el('qa-date-value').textContent,autoTime);assert.equal(el('qa-result').hidden,true);el('qa-reset').onclick();console.log('PASS: repeated approval cannot erase automatic time or complete declaration');
 (async()=>{
- goToDate();result('tamam');done();result('Okudum anladım onaylıyorum');done();result('onaylıyorum');
+ goToDate();result('Okudum anladım onaylıyorum');done();result('onaylıyorum');
  let complete;window.OnamPDF={create:()=>new Promise(resolve=>{complete=resolve})};sandbox.structuredClone=structuredClone;
  const job=el('qa-download').onclick();assert.equal(el('qa-download').disabled,true);el('qa-reset').onclick();complete(new Blob(['test'],{type:'application/pdf'}));await job;assert.equal(el('qa-pdf-status').textContent,'');assert.equal(el('qa-result').hidden,true);
  console.log('PASS: clearing patient data cancels a pending PDF download');
