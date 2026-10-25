@@ -1,0 +1,5 @@
+@pdf-lib/fontkit 1.1.1
+Source: https://github.com/Hopding/fontkit
+Package: https://www.npmjs.com/package/@pdf-lib/fontkit
+The distributed package declares MIT in package.json and README.md. These original metadata/readme files are preserved beside the unmodified browser bundle. No separate LICENSE file ships in the npm artifact.
+Authors from package metadata: Andrew Dillon; contributor: Devon Govett.

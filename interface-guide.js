@@ -30,7 +30,7 @@
   'qa-save-retry':'Kaydedilemeyen formu sunucuya göndermeyi yeniden dener.',
   'qa-qr-download':'Kaydedilen formun QR kodunu resim olarak indirir.',
   'qa-record-link':'Onaylanıp kaydedilmiş formun görüntüleneceği belgeyi açar.',
-  'qa-download':'Form özetini JSON dosyası olarak indirir.'
+  'qa-download':'Hasta bilgilerini ve onaylanan form metnini PDF dosyası olarak indirir.'
  };
  for(const [id,description] of Object.entries(descriptions)){
   const control=document.getElementById(id);if(!control)continue;

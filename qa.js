@@ -11,9 +11,9 @@
   {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Örneğin beş ekim iki bin beş. Duraksayabilirsiniz. Tarihin tamamını söyledikten sonra tamam deyin.',clean:V.birth,error:'Geçerli bir doğum tarihi girin. Örnek biçim: 15.06.1990. Gelecek tarih kabul edilmez.'},
   {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.',clean:V.phone,error:'Geçerli bir Türkiye telefon numarası girin. Başında sıfırla on bir rakam olmalıdır.'},
   {key:'dateTime',label:'Tarih ve saat',prompt:'Tarih ve saat cihazınızdan otomatik alınır. Kabul etmek için tamam deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
-  {key:'declaration',label:'Son beyan',prompt:'Son beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum. İsterseniz Onam formunu okudum, anladım, onaylıyorum da diyebilirsiniz.',final:true}
+  {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
- let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='';
+ let step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').replace(/[.,!?]/g,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  const matchesDeclaration=v=>[declaration,'Onan formunu okudum, anladım, onaylıyorum','Okudum, anladım, onaylıyorum'].some(text=>normalize(text)===normalize(v));
@@ -86,7 +86,7 @@
  function finish(){
   phase='done';window.onamAudio.stop();$('work').hidden=true;$('result').hidden=false;
   receiptKey=window.OnamRecords.createKey();
-  report={type:'patient-declaration',submissionId:crypto.randomUUID(),formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers,identityVerified:false,clinicalConsentRecorded:false};
+  report={type:'patient-declaration',submissionId:crypto.randomUUID(),formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers,formSnapshot:(window.onamFormSnapshot||[]).map(section=>({...section})),identityVerified:false,clinicalConsentRecorded:false};
   const complete=questions.every(q=>answers[q.key]?.value);
   if(!complete)throw new Error('Zorunlu alan eksik');
   $('summary').textContent=questions.map(q=>`${q.label}: ${answers[q.key].value}`).join('\n');
@@ -95,17 +95,17 @@
  async function saveReport(){
   if(!report)return;
   const token=++saveGeneration;const currentReport=report;
-  $('save-retry').hidden=true;$('receipt').hidden=true;$('save-status').textContent='Form sisteme gönderiliyor…';
+  $('save-retry').hidden=true;$('receipt').hidden=true;$('download').disabled=true;$('save-status').textContent='Form sisteme gönderiliyor…';
   try{
    const id=await window.OnamRecords.submit(currentReport,receiptKey);
    if(token!==saveGeneration||report!==currentReport)return;
-   const url=window.OnamRecords.recordUrl(receiptKey);currentReport.recordId=id;
+   const url=window.OnamRecords.recordUrl(receiptKey);currentReport.recordId=id;currentReport.recordUrl=url;
    $('save-status').textContent='Form kaydedildi. QR kodu indirebilir ve sağlık çalışanınızla paylaşabilirsiniz.';
    window.OnamQR.render($('qr'),url);
    $('record-link').href=url;$('receipt').hidden=false;
-  }catch(error){if(token!==saveGeneration||report!==currentReport)return;$('save-status').textContent=error.message;$('save-retry').hidden=!window.OnamRecords.configured}
+  }catch(error){if(token!==saveGeneration||report!==currentReport)return;$('save-status').textContent=error.message;$('save-retry').hidden=!window.OnamRecords.configured}finally{if(token===saveGeneration&&report===currentReport)$('download').disabled=pdfBusy}
  }
- function clearReceipt(){saveGeneration++;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
+ function clearReceipt(){saveGeneration++;pdfGeneration++;pdfBusy=false;$('pdf-status').textContent='';$('download').disabled=false;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
  function reset(){
   abortMic();clearReceipt();phase='idle';answerDraft='';window.onamAudio.stop();answers={};candidate='';spokenDeclaration='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
@@ -183,6 +183,15 @@
  $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});
  $('save-retry').onclick=saveReport;
  $('reset').onclick=reset;$('clear').onclick=reset;
- $('download').onclick=()=>{if(!report)return;const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='onam-formu.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ $('download').onclick=async()=>{
+  if(!report||pdfBusy)return;const currentReport=report,token=++pdfGeneration;pdfBusy=true;$('download').disabled=true;$('pdf-status').textContent='PDF hazırlanıyor…';
+  try{
+   const blob=await window.OnamPDF.create(structuredClone(currentReport));
+   if(token!==pdfGeneration||report!==currentReport)return;
+   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='onam-formu.pdf';link.style.display='none';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   $('pdf-status').textContent='PDF oluşturuldu. Tarayıcınızın indirmelerinden açabilirsiniz.';
+  }catch(error){if(token===pdfGeneration&&report===currentReport)$('pdf-status').textContent=error.message||'PDF oluşturulamadı. Yeniden deneyin.'}
+  finally{if(token===pdfGeneration&&report===currentReport){pdfBusy=false;$('download').disabled=false}}
+ };
  window.addEventListener('pagehide',()=>{clearReceipt();phase='idle';answerDraft='';abortMic();answers={};report=null;receiptKey=null;candidate='';spokenDeclaration='';confirmationText='';confirmationParts=undefined;$('answer').value='';$('summary').textContent='';$('status').textContent='';$('work').hidden=true;$('result').hidden=true;$('start').hidden=false});
 })();

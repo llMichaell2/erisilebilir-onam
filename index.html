@@ -106,7 +106,8 @@
       <p><a id="qa-record-link">Onaylanan formu aç</a></p>
       <p>QR’ın veya bağlantının kopyasına sahip olan herkes bu formdaki kişisel bilgileri görebilir. QR’ı yalnızca ilgili sağlık çalışanıyla paylaşın.</p>
     </div>
-    <button class="secondary" id="qa-download">Form özetini indir (JSON)</button>
+    <button class="secondary" id="qa-download">Formu PDF olarak indir</button>
+    <p id="qa-pdf-status" role="status" aria-live="polite"></p>
     <button class="plain" id="qa-clear">Ekranı temizle</button>
   </div>
 </section>
@@ -148,6 +149,7 @@
     "text": "Yukarıdaki tüm bilgileri okudum, anladım ve sorularım cevaplandı.\nİşlemin faydalarını ve risklerini kabul ediyorum.\nGerektiğinde kontrast madde verilmesini onaylıyorum.\nİstediğim zaman onamı geri çekebileceğimi biliyorum."
   }
 ];
+ window.onamFormSnapshot=data.map(section=>({...section}));
  const list=document.getElementById('sections'), title=document.getElementById('currentTitle'), text=document.getElementById('currentText');
  const progress=document.getElementById('progress'), progressLabel=document.getElementById('progressLabel');
  let index=0, rate=1, queue=[], queuePos=0, isReading=false, speechSession=0, activeUtterance=null,guided=false,followed=-1;
@@ -271,8 +273,9 @@
 <script src="records.js?v=25"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="qr-ui.js?v=11"></script>
-<script src="qa.js?v=24"></script>
+<script src="pdf-export.js?v=26"></script>
+<script src="qa.js?v=26"></script>
 <script src="accessibility.js?v=11"></script>
-<script src="interface-guide.js?v=22"></script>
+<script src="interface-guide.js?v=26"></script>
 </body>
 </html>
