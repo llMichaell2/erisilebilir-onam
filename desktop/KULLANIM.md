@@ -19,3 +19,9 @@ Supabase SQL Editor'da arsiv-kurulum.sql dosyasının tamamını bir kez çalı�
 Aktif formlar listesinden kayıt seçip Seçilenleri arşive kaldır düğmesine basın. Açılan pencerede isimleri kontrol edip onaylayın. Form verileri veya QR anahtarları silinmez. Hasta aynı QR ile formuna erişebilir. Arşiv sekmesinden kayıtlar ana listeye geri alınabilir. İşlemi yapan personelin kimliği ve zamanı veritabanında tutulur. Liste her görünümde son 100 kaydı gösterir.
 
 Üniversitenin veya e-Nabız'ın resmî sağlık uygulaması değildir; İstanbul Kent Üniversitesi öğrenci projesidir. Logo ve dekoratif Taksim görseli kent.edu.tr kaynaklarından alınmıştır. Microsoft WebView2 ve QR bileşenlerinin lisansları pakette bulunur.
+
+## Ana sayfa ve mola kilidi
+
+Üstteki Kent logosu veya sol menüdeki Ana sayfa düğmesi, uygulama içindeki tanıtım sayfasını açar. Slaytlar 10 saniyede bir değişir; duraklatma, önceki ve sonraki düğmeleri kullanılabilir. Azaltılmış hareket tercihinde otomatik geçiş kapalı başlar. Üniversite bağlantısı uygulamada ayrı pencerede açılır.
+
+Molada / Kilitle düğmesi mevcut personel oturumunu kapatır, hasta listesini temizler ve uygulama içinden açılan belge pencerelerini kapatır. Kilit penceresinde aynı personel hesabının şifresi yeniden Supabase ile doğrulanır. Yanlış şifre veya ağ hatasında kayıtlar açılmaz. Kilit penceresinden çıkış yaparak ana sayfaya dönüp başka hesapla giriş yapılabilir. Bilgisayardaki başka programları kilitlemek için Windows kilidini kullanın.
