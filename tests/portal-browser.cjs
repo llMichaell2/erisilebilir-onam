@@ -7,12 +7,20 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await page.clock.install();await page.goto('https://onam.test/yonetim/index.html');
  const carousel=page.locator('#login .portal-carousel');
  assert.equal(await page.locator('#portal-home-link').getAttribute('href'),'index.html#home');
- await page.mouse.move(0,0);await page.clock.fastForward(10001);assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 03');
- await carousel.locator('[data-slide-pause]').click();await page.locator('#email').focus();await page.mouse.move(0,0);await page.clock.fastForward(30000);assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 03');
- await carousel.locator('[data-slide-next]').click();assert.equal(await carousel.locator('[data-slide-position]').textContent(),'03 / 03');
- await carousel.locator('[data-slide-prev]').click();assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 03');
+ await page.mouse.move(0,0);await page.clock.fastForward(10001);assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 09');
+ await carousel.locator('[data-slide-pause]').click();await page.locator('#email').focus();await page.mouse.move(0,0);await page.clock.fastForward(30000);assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 09');
+ await carousel.locator('[data-slide-next]').click();assert.equal(await carousel.locator('[data-slide-position]').textContent(),'03 / 09');
+ await carousel.locator('[data-slide-prev]').click();assert.equal(await carousel.locator('[data-slide-position]').textContent(),'02 / 09');
  await page.locator('#email').fill('personel@example.test');await page.locator('#password').fill('test-only');await page.locator('#login-button').click();await page.locator('.record-card').first().waitFor();
- await page.locator('#portal-home-link').click();assert.equal(await page.locator('#portal-home').isVisible(),true);assert.equal(await page.locator('#dashboard').isVisible(),false);assert.match(page.url(),/index.html$/);
+ 
+ assert.equal(await page.locator('#login .portal-slide').count(),9);assert.equal(await page.locator('#portal-home .portal-slide').count(),9);
+ const quote=page.locator('#staff-quote');const firstQuote=await quote.textContent();assert.ok(await page.locator('.staff-quotes').evaluate(el=>el.getBoundingClientRect().height)<300,'compact initial quote card');
+ await page.locator('#search').focus();await page.mouse.move(0,0);await page.clock.fastForward(12001);await page.clock.fastForward(221);assert.notEqual(await quote.textContent(),firstQuote);
+ await page.locator('#quote-next').click();await page.clock.fastForward(221);const nextQuote=await quote.textContent();
+ await page.locator('#quote-pause').click();await page.locator('#search').focus();await page.mouse.move(0,0);await page.clock.fastForward(30000);assert.equal(await quote.textContent(),nextQuote);
+ await page.locator('#quote-prev').click();await page.clock.fastForward(221);assert.notEqual(await quote.textContent(),nextQuote);
+ await page.screenshot({path:path.join(root,'../kent-staff-quotes.png'),fullPage:true});
+await page.locator('#portal-home-link').click();assert.equal(await page.locator('#portal-home').isVisible(),true);assert.equal(await page.locator('#dashboard').isVisible(),false);assert.match(page.url(),/index.html$/);
  for(const width of [320,375,768,1440]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'home overflow '+width)}
  await page.clock.fastForward(16000);assert.equal(await page.locator('#portal-home').isVisible(),true);assert.equal(await page.locator('#dashboard').isVisible(),false);
  await page.screenshot({path:path.join(root,'../kent-home.png'),fullPage:true});
@@ -26,6 +34,6 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await page.locator('#unlock-password').fill('test-only');await page.locator('#unlock-button').click();await page.locator('#lock-dialog').waitFor({state:'hidden'});await page.locator('.record-card').first().waitFor();assert.equal(logins,3);assert.ok(reads>lockedReads);assert.equal(await page.locator('#unlock-password').inputValue(),'');
  await page.locator('#nav-home').click();await page.locator('#home-lock').click();await page.waitForFunction(()=>!document.getElementById('unlock-button').disabled);holdLogin=true;await page.locator('#unlock-password').fill('test-only');await page.locator('#unlock-button').click();await page.waitForTimeout(50);assert.ok(releaseLogin);await page.locator('#lock-logout').click();holdLogin=false;releaseLogin();await page.waitForTimeout(50);assert.equal(await page.locator('#dashboard').isVisible(),false);assert.equal(await page.locator('#login').isVisible(),true);assert.equal(await page.locator('#lock-dialog').isVisible(),false);assert.equal(await page.locator('#record-list').textContent(),'');
  await page.locator('#portal-home-link').click();assert.equal(await page.locator('#login').isVisible(),true);assert.equal(await page.evaluate(()=>localStorage.length),0);assert.deepEqual(errors,[]);
- await page.emulateMedia({reducedMotion:'reduce'});await page.reload();assert.equal(await page.locator('#login [data-slide-pause]').textContent(),'Slaytları oynat');await page.clock.fastForward(30000);assert.equal(await page.locator('#login [data-slide-position]').textContent(),'01 / 03');
+ await page.emulateMedia({reducedMotion:'reduce'});await page.reload();assert.equal(await page.locator('#login [data-slide-pause]').textContent(),'Slaytları oynat');await page.clock.fastForward(30000);assert.equal(await page.locator('#login [data-slide-position]').textContent(),'01 / 09');
  console.log('PASS: explicit home link, automatic/manual/paused/reduced-motion slides, responsive authenticated home, home survives polling, lock clears records/counts/archive details, Escape cannot unlock, no reads while locked, wrong password denied, server re-authentication, stale unlock discarded after logout, logout returns home');
  }finally{await browser.close()}})().catch(error=>{console.error(error);process.exit(1)});
