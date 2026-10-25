@@ -91,11 +91,12 @@ const root=path.resolve(__dirname,'..');
   async function approve(){await finishPrompt();await voice('doğru');await finishPrompt()}
   await slow.locator('#qa-start').click();await finishPrompt();
   await voice('Ali');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
-  await voice('Veli');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
+  await slow.evaluate(()=>{window.closedMic=mic;mic.onend()});await slow.waitForFunction(()=>mic!==closedMic);
+  await voice('Veli.');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await voice('tamam');assert.equal(await slow.locator('#qa-answer').inputValue(),'Ali Veli');await approve();
   await voice('bir sıfır sıfır sıfır sıfır');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await slow.evaluate(()=>mic.onend());assert.match(await slow.locator('#qa-status').textContent(),/korundu/);
-  await slow.locator('#qa-listen').click();await voice('sıfır sıfır sıfır bir dört altı');assert.equal(await slow.locator('#qa-answer').inputValue(),'10000000146');await approve();
+  await slow.evaluate(()=>window.closedMic=mic);await slow.waitForFunction(()=>mic!==closedMic);await voice('sıfır sıfır sıfır bir dört altı');assert.equal(await slow.locator('#qa-answer').inputValue(),'10000000146');await approve();
   await voice('beş ekim 200');await voice('tamam');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);await finishPrompt();
   for(const text of ['beş','ekim','iki bin']){await voice(text);assert.equal(await slow.locator('#qa-confirm').isVisible(),false)}
   assert.match(await slow.locator('#qa-answer').inputValue(),/iki bin/);
