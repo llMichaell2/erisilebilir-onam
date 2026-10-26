@@ -11,10 +11,10 @@
   {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Örneğin beş ekim iki bin beş. Duraksayabilirsiniz. Tarihin tamamını söyledikten sonra tamam deyin.',clean:V.birth,error:'Geçerli bir doğum tarihi girin. Örnek biçim: 15.06.1990. Gelecek tarih kabul edilmez.'},
   {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.',clean:V.phone,error:'Geçerli bir Türkiye telefon numarası girin. Başında sıfırla on bir rakam olmalıdır.'},
   {key:'dateTime',label:'Tarih ve saat',prompt:'Tarih ve saat cihazınızdan otomatik alınır. Kabul etmek için tamam deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
-  ...H.definitions.flatMap((q,index)=>[{key:'history_'+q.id,label:q.label,prompt:q.prompt,medical:true,medicalNumber:index+1,clean:H.parseAnswer,error:'Lütfen evet veya hayır deyin. Bilmiyorsanız bilmiyorum diyebilirsiniz.'},...(q.follow?[{key:'detail_'+q.id,label:q.label+' açıklaması',prompt:q.follow+' Bilmiyorsanız bilmiyorum deyin. Açıklamanız bitince tamam deyin.',medicalDetail:true,parent:'history_'+q.id,medicalNumber:index+1,validate:H.detailError}]:[])]),
+  ...H.definitions.flatMap((q,index)=>[{key:'history_'+q.id,label:q.label,prompt:q.prompt,medical:true,medicalNumber:index+1,clean:H.parseAnswer,error:'Lütfen evet veya hayır deyin. Bilmiyorsanız bilmiyorum diyebilirsiniz.'},...(q.follow?[{key:'detail_'+q.id,label:q.label+' açıklaması',prompt:q.follow,medicalDetail:true,parent:'history_'+q.id,medicalNumber:index+1,validate:H.detailError}]:[])]),
   {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
- let typingAnswer=false,dateReturnStep=0,editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
+ let correctionTimeout=null,healthAutoHold=false,healthIntroSpoken=false,typingAnswer=false,dateReturnStep=0,editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').normalize('NFC').replace(/[\p{P}]/gu,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  // Match only complete positive clauses; tolerate repetition, never ignore unknown/negative words.
@@ -33,7 +33,7 @@
  let micTimeout=null,restartTimer=null,answerDraft='';
  const collectingAnswer=()=>phase==='answer';
  const spokenDigits=value=>value.toLocaleLowerCase('tr-TR').split(/[\s,;.:()＋+–—-]+/).map(w=>({sıfır:'0',bir:'1',iki:'2',üç:'3',dört:'4',beş:'5',altı:'6',yedi:'7',sekiz:'8',dokuz:'9'}[w]??w)).join('');
- function abortMic(){clearTimeout(micTimeout);clearTimeout(restartTimer);restartTimer=null;generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
+ function abortMic(){clearTimeout(correctionTimeout);correctionTimeout=null;clearTimeout(micTimeout);clearTimeout(restartTimer);restartTimer=null;generation++;if(recognition){const old=recognition;recognition=null;old.abort()}$('listen').disabled=!Recognition||!['answer','confirm'].includes(phase)}
  window.addEventListener('onam-stop',()=>{const listening=!!recognition||restartTimer!==null;abortMic();if(listening)$('status').textContent='Mikrofon durduruldu. Tekrar deneyebilir veya yazabilirsiniz.'});
  let voiceBank=null;
  fetch('voice-messages.json?v=9').then(r=>r.ok?r.json():null).then(bank=>{voiceBank=bank}).catch(()=>{});
@@ -56,7 +56,7 @@
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
-  typingAnswer=false;let autoDate=false;
+  healthAutoHold=false;typingAnswer=false;let autoDate=false;
   if(questions[step].key==='dateTime'&&!editingDate){answers.dateTime={value:V.dateTime(V.localNow()),confirmedAt:new Date().toISOString(),source:'device'};step++;autoDate=true}
   while(questions[step]?.medicalDetail&&answers[questions[step].parent]?.value!=='Evet')step++;
   phase='answer';answerDraft='';candidate='';spokenDeclaration='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
@@ -64,16 +64,17 @@
   $('date-info').hidden=!answers.dateTime||editingDate;
   $('date-value').textContent=answers.dateTime?.value||'';
   const answerLabel=document.getElementById('qa-answer-label');if(answerLabel)answerLabel.textContent=q.label+' — cevabınız';
-  questionSpeech=q.key==='dateTime'?'Tarih ve saat düzeltme. Yeni tarih ve saati söyleyip tamam deyin veya yazın. Mevcut değeri korumak için tamam diyebilirsiniz.':(autoDate?'Tarih ve saat otomatik kaydedildi. ':'')+q.prompt+(q.medical?' Evet veya hayır diyebilirsiniz. Bilmiyorsanız bilmiyorum deyin.':'');
+  const healthIntro=q.medical&&!healthIntroSpoken?'Sağlık sorularına evet, hayır veya bilmiyorum diyebilirsiniz. Yanıtınız geri okunur. Yanlışsa hayır veya yanlış deyin; doğruysa sonraki soruya geçerim. Açıklama istenirse bitince tamam deyin. ':'';if(q.medical)healthIntroSpoken=true;
+  questionSpeech=q.key==='dateTime'?'Tarih ve saat düzeltme. Yeni tarih ve saati söyleyip tamam deyin veya yazın. Mevcut değeri korumak için tamam diyebilirsiniz.':q.prompt;
   $('question').textContent=`${editingDate?'Tarih ve saat düzeltme':q.medical||q.medicalDetail?'Sağlık öyküsü '+q.medicalNumber+' / 10'+(q.medicalDetail?' · Açıklama':''):q.final?'Son beyan':'Hasta bilgileri '+(step+1)+' / 4'}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
-  if(q.medical)$('status').textContent=Recognition&&!window.onamSilent&&$('auto').checked?'Evet veya Hayır düğmesini seçebilir ya da sesle yanıtlayabilirsiniz. Bilmiyorsanız bilmiyorum deyin.':'Evet veya Hayır düğmesini seçebilir ya da yanıtınızı yazabilirsiniz. Bilmiyorsanız bilmiyorum yazabilirsiniz.';
-  controls();$('question').focus();say(questionSpeech);
+  if(q.medical)$('status').textContent=Recognition&&!window.onamSilent&&$('auto').checked?'Soru tamamlanınca konuşabilirsiniz.':'Yanıtınızı seçebilir veya yazabilirsiniz.';
+  controls();$('question').focus();say((autoDate?'Tarih ve saat otomatik kaydedildi. ':'')+healthIntro+questionSpeech);
  }
  function submit(value){
   if(phase!=='answer')return;
-  abortMic();answerDraft='';const q=questions[step];value=value.trim();
+  abortMic();healthAutoHold=false;answerDraft='';const q=questions[step];value=value.trim();
   const acceptSuggested=q.key==='dateTime'&&yes(value);
   if(acceptSuggested)value=$('answer').value;
   if(!value){$('status').textContent='Cevap alınamadı. Tekrar konuşabilir veya yazabilirsiniz.';return}
@@ -93,7 +94,7 @@
   const numeric=['tc','phone','birthDate','dateTime'].includes(q.key);
   const grouped=numeric?V.answerParts(q.key,value):[];
   const spoken=numeric?grouped.join(' '):value;
-  const message=q.final?`Beyanınız: ${declaration}. İşlemi bitirmek için beyanımı tamamla veya onaylıyorum deyin. Beyanımı tamamla düğmesine de basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
+  const message=q.medical&&Recognition&&$('auto').checked&&!window.onamSilent?`${q.label}: ${spoken} dediniz. Doğruysa geçiyorum.`:q.final?`Beyanınız: ${declaration}. İşlemi bitirmek için beyanımı tamamla veya onaylıyorum deyin. Beyanımı tamamla düğmesine de basabilirsiniz.`:`${q.label} için cevabınız: ${spoken}. Bilgilerim doğru veya düzelteceğim diyebilirsiniz.`;
   const parts=voiceBank&&numeric?[voiceBank[q.key],...grouped,voiceBank.confirm]:undefined;
   confirmationText=message;confirmationParts=parts;
   $('status').textContent=message;say(message,parts);
@@ -115,7 +116,7 @@
   const complete=questions.every(q=>q.medicalDetail&&answers[q.parent]?.value!=='Evet'||answers[q.key]?.value);
   if(!complete)throw new Error('Zorunlu alan eksik');
   $('summary').textContent=questions.filter(q=>answers[q.key]?.value).map(q=>`${q.label}: ${answers[q.key].value}`).join('\n');
-  $('download').focus();say('Son beyanınız alındı. İşlem tamamlandı. Geçmiş olsun. Sağlıklı günler dileriz.');saveReport();
+  $('download').focus();say('Son beyanınız alındı. Formunuz kaydediliyor.');saveReport();
  }
  async function saveReport(){
   if(!report)return;
@@ -127,11 +128,12 @@
    const url=window.OnamRecords.recordUrl(receiptKey);currentReport.recordId=id;currentReport.recordUrl=url;
    $('save-status').textContent='Form kaydedildi. QR kodu indirebilir ve sağlık çalışanınızla paylaşabilirsiniz.';
    window.OnamQR.render($('qr'),url);
-   $('record-link').href=url;$('receipt').hidden=false;
-  }catch(error){if(token!==saveGeneration||report!==currentReport)return;$('save-status').textContent=error.message;$('save-retry').hidden=!window.OnamRecords.configured}finally{if(token===saveGeneration&&report===currentReport)$('download').disabled=pdfBusy}
+   $('record-link').href=url;$('receipt').hidden=false;say('Barkodunuz oluşturuldu. Bu barkod ile onam formunuza yeniden erişebilirsiniz. Geçmiş olsun. Sağlıklı günler dileriz.');
+  }catch(error){if(token!==saveGeneration||report!==currentReport)return;$('save-status').textContent=error.message;$('save-retry').hidden=!window.OnamRecords.configured;say(currentReport.recordId?'Formunuz kaydedildi ancak barkod görüntülenemedi. Yeniden deneyebilirsiniz.':'Formunuz henüz sisteme kaydedilemedi. Barkod oluşturulamadı. Kaydetmeyi tekrar deneyebilir veya PDF kopyasını indirebilirsiniz.')}finally{if(token===saveGeneration&&report===currentReport)$('download').disabled=pdfBusy}
  }
  function clearReceipt(){saveGeneration++;pdfGeneration++;pdfBusy=false;$('pdf-status').textContent='';$('download').disabled=false;$('qr').replaceChildren();$('receipt').hidden=true;$('record-link').removeAttribute('href');$('save-status').textContent='';$('save-retry').hidden=true}
  function reset(){
+  healthIntroSpoken=false;
   editingDate=false;$('date-info').hidden=true;
   abortMic();clearReceipt();phase='idle';answerDraft='';window.onamAudio.stop();answers={};candidate='';spokenDeclaration='';report=null;receiptKey=null;step=0;confirmationText='';confirmationParts=undefined;
   $('answer').value='';$('summary').textContent='';$('status').textContent='';$('question').textContent='';
@@ -142,12 +144,23 @@
   abortMic();window.onamAudio.stop();
   const token=generation;const expectedPhase=phase;const expectedStep=step;
   const budget=recovery&&typeof recovery.startedAt==='number'?recovery:{startedAt:Date.now(),attempts:0,networkAttempts:0};
-  const limit=phase==='answer'?120000:25000;
+  const limit=phase==='answer'?240000:45000;
   const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=collectingAnswer();rec.interimResults=true;rec.maxAlternatives=1;
   let resultReceived=false,failed=false,ended=false,pending='';
   const collectMode=collectingAnswer(),q=questions[step];let prefix=collectMode?answerDraft:'',resultOffset=0;
   $('listen').disabled=false;$('listen').textContent='Mikrofonu yeniden başlat';$('status').textContent='Mikrofon açılıyor. İzin istenirse izin verin.';
-  rec.onstart=()=>{if(token===generation&&!ended)$('status').textContent=answerDraft?'Dinliyorum. Söyledikleriniz korundu. Kaldığınız yerden devam edin; bitince tamam deyin.':'Dinliyorum. Şimdi konuşabilirsiniz.'};
+  rec.onstart=()=>{
+   if(token!==generation||ended)return;
+   $('status').textContent=answerDraft?'Dinliyorum. Söyledikleriniz korundu. Kaldığınız yerden devam edin; bitince tamam deyin.':'Dinliyorum. Şimdi konuşabilirsiniz.';
+   if(expectedPhase==='confirm'&&q.medical&&!healthAutoHold&&$('auto').checked&&!window.onamSilent&&!document.hidden){
+    $('status').textContent='Yanlışsa hayır veya yanlış deyin. Düzeltme için 6 saniye dinliyorum.';
+    correctionTimeout=setTimeout(()=>{
+     correctionTimeout=null;
+     if(token===generation&&!ended&&phase===expectedPhase&&step===expectedStep&&!healthAutoHold&&$('auto').checked&&!window.onamSilent&&!document.hidden)confirm();
+    },6000);
+   }
+  };
+  rec.onspeechstart=()=>{if(token!==generation||ended)return;healthAutoHold=true;clearTimeout(correctionTimeout);correctionTimeout=null};
   function acceptTranscript(value){
    if(token!==generation||phase!==expectedPhase||step!==expectedStep)return;
    if(!value.trim())return;resultReceived=true;
@@ -159,6 +172,7 @@
   rec.onresult=e=>{
    if(token!==generation||ended||phase!==expectedPhase||step!==expectedStep)return;
    const results=Array.from(e.results||[]);
+   if(results.some(result=>result[0]?.transcript?.trim())){healthAutoHold=true;clearTimeout(correctionTimeout);correctionTimeout=null}
    const fresh=results.slice(resultOffset),final=!!fresh.length&&fresh.every(r=>r.isFinal);
    if(collectMode&&final&&['baştan','yeniden başla'].includes(normalize(fresh[fresh.length-1][0]?.transcript||''))){
     prefix='';resultOffset=results.length;answerDraft='';pending='';$('answer').value=q.key==='dateTime'?V.dateTime(V.localNow()):'';
@@ -190,10 +204,12 @@
   };
   rec.onerror=e=>{
    if(token!==generation||ended)return;
+   clearTimeout(correctionTimeout);correctionTimeout=null;
    if(e.error==='network'){
+    if(expectedPhase==='confirm'&&q.medical)healthAutoHold=true;
     if(collectMode&&pending){answerDraft=pending.replace(/(?:^|\s)(?:cevabım bitti|tamam|bitti)[.,!?]*$/iu,'').trim();$('answer').value=answerDraft}
     failed=true;abortMic();const retryToken=generation,offline=window.navigator?.onLine===false;
-    const canRetry=!offline&&$('auto').checked&&!window.onamSilent&&!document.hidden&&(budget.networkAttempts||0)<1&&budget.attempts<3&&Date.now()-budget.startedAt+1800<limit;
+    const canRetry=!offline&&$('auto').checked&&!window.onamSilent&&!document.hidden&&(budget.networkAttempts||0)<1&&budget.attempts<6&&Date.now()-budget.startedAt+1800<limit;
     if(canRetry){
      $('status').textContent=(answerDraft?'Söyledikleriniz korundu. ':'')+'Konuşma hizmeti bağlantısı kesildi. Bir kez yeniden deneniyor. İsterseniz yazıyla devam edebilirsiniz.';
      restartTimer=setTimeout(()=>{
@@ -212,11 +228,11 @@
    $('status').textContent=messages[e.error]||'Sesli cevap alınamadı. Tekrar deneyin veya yazıyla devam edin.';
   };
   rec.onend=()=>{
-   if(token!==generation||ended)return;ended=true;clearTimeout(micTimeout);recognition=null;
+   if(token!==generation||ended)return;ended=true;clearTimeout(correctionTimeout);correctionTimeout=null;clearTimeout(micTimeout);recognition=null;
    // Never interpret an interim result as an approval when the service disconnects.
    if(collectMode&&pending){answerDraft=pending.replace(/(?:^|\s)(?:cevabım bitti|tamam|bitti)[.,!?]*$/iu,'').trim();$('answer').value=answerDraft}
    $('listen').disabled=false;
-   const recover=!failed&&!resultReceived&&$('auto').checked&&!window.onamSilent&&!document.hidden&&budget.attempts<3&&Date.now()-budget.startedAt<limit;
+   const recover=!failed&&!resultReceived&&$('auto').checked&&!window.onamSilent&&!document.hidden&&budget.attempts<6&&Date.now()-budget.startedAt<limit;
    if(recover){
     $('status').textContent=(answerDraft?'Söyledikleriniz korundu. ':'')+'Dinleme yeniden açılıyor. Kaldığınız yerden konuşabilir veya yazabilirsiniz.';
     restartTimer=setTimeout(()=>{

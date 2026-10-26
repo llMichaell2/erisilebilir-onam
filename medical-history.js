@@ -28,7 +28,9 @@
   target.replaceChildren();if(!history)return false;
   const rows=entries(history);
   if(!rows){const note=document.createElement('p');note.textContent='Bu sağlık öyküsünün sürümü desteklenmiyor. Personel değerlendirmesi gerekir.';target.append(note);return true}
-  rows.forEach((row,index)=>{const article=document.createElement('div'),heading=document.createElement('h3'),answer=document.createElement('p');article.className='health-response';heading.textContent=(index+1)+'. '+row.prompt;answer.textContent='Yanıt: '+row.answer;article.append(heading,answer);if(row.detail){const detail=document.createElement('p');detail.textContent='Açıklama: '+row.detail;article.append(detail)}target.append(article)});return true;
+  rows.forEach((row,index)=>{const article=document.createElement('div'),heading=document.createElement('h3'),answer=document.createElement('p');article.className='health-response';heading.textContent=(index+1)+'. '+row.prompt;const choices=document.createElement('div');choices.className='health-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label','Kaydedilen yanıt');
+   for(const value of ['Evet','Hayır','Bilmiyorum']){const option=document.createElement('span'),mark=document.createElement('span'),label=document.createElement('span');const selected=row.answer===value;option.className='health-choice'+(selected?' is-selected':'');mark.className='health-checkbox';mark.setAttribute('aria-hidden','true');mark.textContent=selected?'✓':'';label.textContent=value;option.append(mark,label);if(selected){const state=document.createElement('span');state.className='sr-only';state.textContent=' (işaretli)';option.append(state)}choices.append(option)}
+   article.append(heading,choices);if(!['Evet','Hayır','Bilmiyorum'].includes(row.answer)){answer.textContent='Yanıt: '+row.answer;article.append(answer)}if(row.detail){const detail=document.createElement('p');detail.textContent='Açıklama: '+row.detail;article.append(detail)}target.append(article)});return true;
  }
  window.OnamHealth=Object.freeze({version,definitions,parseAnswer,detailError,snapshot,entries,render});
 })();

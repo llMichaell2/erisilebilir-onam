@@ -136,3 +136,11 @@ Kimlik ve iletişim bilgilerinden sonra, son beyandan önce 10 ortak MR/BT sağl
 Sürüm: health-history-v1. Yanıtlar mevcut altı alanlı answers nesnesinin declaration.healthHistory alanında sürümlü metadata olarak saklanır; sunucunun var olan JSONB ve QR uçlarıyla uyumludur. Yeni SQL kurulumu gerekmez. Açıklamalar 120 karakter ve 180 UTF-8 bayt ile sınırlıdır; altı temel alan ve toplam 6000 bayt sunucu sınırı korunur. Eski kayıtlar açılır; sağlık öyküsü bulunmadığı belirtilir. Form ayrıntısında ve PDF’de sağlık soruları gösterilir. Yeni sürümde soru metni değiştirilecekse eski sürümün anlamını korumak için yeni sağlık öyküsü sürümü tanımlanmalıdır.
 
 Kontroller: node tests/health-history.cjs; node tests/health-history-database.cjs. Veritabanı testi @electric-sql/pglite kullanır ve üretim Supabase projesine yazmaz. Yeni sorular klinik kullanım öncesi radyoloji ekibi tarafından gözden geçirilmelidir.
+
+## Kısa sesli yönlendirme ve düzeltme aralığı
+
+Ortak Evet/Hayır/Bilmiyorum yönlendirmesi sağlık bölümünün başında bir kez okunur. Açıklama sonundaki tamam komutu da bu yönergede anlatılır. Toplam cevap dinleme sınırı 240 saniye, normal doğrulama sınırı 45 saniyedir; tarayıcı oturum sonlandırmalarında en çok altı devam denemesi yapılır. Ağ hatasında tek yeniden deneme sınırı korunur.
+
+Otomatik dinleme açıkken sağlık ana yanıtı geri okunduktan ve mikrofon başladıktan sonra 6 saniye düzeltme için dinlenir. Konuşma başlaması, geçici bir sonuç, hata veya kullanıcı durdurması otomatik geçişi iptal eder. Hayır/Yanlış soruyu yeniden açar. Kimlik bilgileri, açıklamalar ve son beyan kendiliğinden onaylanmaz.
+
+QR oluşturuldu duyurusu ancak kayıt ve QR çizimi başarılı olunca yapılır. Sağlık yanıtları açılan formda ve PDF’de salt okunur Evet/Hayır/Bilmiyorum kutuları ile gösterilir. Testler: node tests/speech-recovery.cjs; node tests/receipt-feedback.cjs. Tarayıcı düzeltme aralığı denemesi için tests/health-history-browser.html?grace=auto, ?grace=correction ve ?grace=network kullanılabilir; bunlar yalnızca test verisi kullanır.

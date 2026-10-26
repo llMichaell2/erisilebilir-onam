@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 function setup(){
  const els=new Map(),events={},timers=new Map();let id=0,now=0,mic,done,starts=0;
  const el=k=>{if(!els.has(k))els.set(k,{value:'',checked:true,disabled:false,focus(){},replaceChildren(){},removeAttribute(){}});return els.get(k)};
- const window={OnamRecords:{},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(m,cb){done=cb}},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}}};
+ const window={OnamRecords:{},addEventListener:(k,f)=>events[k]=f,onamAudio:{stop(){events['onam-stop']?.()},speak(m,cb){window.lastSpoken=m;done=cb}},SpeechRecognition:class{start(){mic=this;starts++;this.onstart?.()}abort(){this.onend?.()}}};
  const document={hidden:false,getElementById:el,addEventListener:(k,f)=>events[k]=f};
  class Clock extends Date{static now(){return now}}
  const box={window,document,Date:Clock,fetch:async()=>({ok:false}),setTimeout:(f,ms)=>{timers.set(++id,{f,at:now+ms});return id},clearTimeout:k=>timers.delete(k)};
@@ -45,9 +45,9 @@ console.log('PASS: pending recovery cancelled by stop/reset/typing/hidden tab/op
  console.log('PASS: provisional yes never confirms on disconnect; final no permits correction');
 }
 {
- const x=setup();x.start();for(let i=0;i<4;i++){x.mic.onerror({error:'no-speech'});x.mic.onend();x.tick(600)}assert.equal(x.starts,4);assert.match(x.el('qa-status').textContent,/Mikrofon düğmesi/);
- const y=setup();y.start();y.mic.onend();y.tick(120000);assert.equal(y.starts,1);assert.match(y.el('qa-status').textContent,/süresi doldu/);
- console.log('PASS: silence recovery bounded to three retries and original session deadline');
+ const x=setup();x.start();for(let i=0;i<7;i++){x.mic.onerror({error:'no-speech'});x.mic.onend();x.tick(600)}assert.equal(x.starts,7);assert.match(x.el('qa-status').textContent,/Mikrofon düğmesi/);
+ const y=setup();y.start();y.mic.onend();y.tick(240000);assert.equal(y.starts,1);assert.match(y.el('qa-status').textContent,/süresi doldu/);
+ console.log('PASS: silence recovery bounded to six retries and original session deadline');
 }
 for(const error of ['not-allowed','service-not-allowed','audio-capture','aborted']){
  const x=setup();x.start();x.send('Ayşe');x.mic.onerror({error});x.mic.onend();x.tick(1000);assert.equal(x.starts,1,error);assert.equal(x.el('qa-answer').value,'Ayşe');
@@ -90,3 +90,39 @@ for(const action of ['stop','reset','type','hidden','opt-out','silent','repeat',
  const x=setup();x.start();for(const v of ['Test Hasta','10000000146','05.10.2005','05381234567']){x.el('qa-answer').value=v;x.click('submit');x.click('confirm')}x.speakDone();x.mic.onerror({error:'network'});x.tick(1800);x.mic.onerror({error:'network'});assert.equal(x.el('qa-answer').hidden,false);x.click('type');x.el('qa-answer').value='Bilmiyorum';x.click('submit');assert.equal(x.el('qa-answer').value,'Bilmiyorum');x.click('confirm');assert.match(x.el('qa-question').textContent,/Sağlık öyküsü 2/);assert.equal(x.el('qa-auto').checked,false);
 }
 console.log('PASS: network recovery honours cancellation, offline state, confirmation safety and typed unknown health answers');
+
+{
+ const x=setup();x.start();x.tick(120001);assert.equal(x.window.onamMicActive(),true);x.tick(119999);assert.equal(x.window.onamMicActive(),false);
+ const y=setup();y.start();y.send('Ali Can tamam');y.speakDone();y.tick(25001);assert.equal(y.window.onamMicActive(),true);y.tick(19999);assert.equal(y.window.onamMicActive(),false);
+}
+{
+ const x=setup();x.start();for(const value of ['Test Hasta','10000000146','05.10.2005','05381234567']){x.el('qa-answer').value=value;x.click('submit');x.click('confirm')}
+ assert.match(x.window.lastSpoken,/Sağlık sorularına evet/);x.click('repeat');assert.doesNotMatch(x.window.lastSpoken,/Sağlık sorularına evet/);
+ x.click('no');x.click('confirm');assert.doesNotMatch(x.window.lastSpoken,/Sağlık sorularına evet|Bilmiyorsanız bilmiyorum/);x.click('correct');assert.doesNotMatch(x.window.lastSpoken,/Sağlık sorularına evet/);
+ x.click('reset');x.start();for(const value of ['Test Hasta','10000000146','05.10.2005','05381234567']){x.el('qa-answer').value=value;x.click('submit');x.click('confirm')}assert.match(x.window.lastSpoken,/Sağlık sorularına evet/);
+}
+console.log('PASS: 240-second answers, 45-second confirmations and once-per-form health instructions; repeat does not repeat instructions');
+
+const reachHealth=()=>{const x=setup();x.start();for(const value of ['Test Hasta','10000000146','05.10.2005','05381234567']){x.el('qa-answer').value=value;x.click('submit');x.click('confirm')}return x};
+{
+ const x=reachHealth();x.click('yes');x.speakDone();x.tick(5999);assert.equal(x.el('qa-confirm').hidden,false);x.tick(1);assert.match(x.el('qa-question').textContent,/Açıklama/);
+ const y=reachHealth();y.click('no');y.speakDone();y.tick(6000);assert.match(y.el('qa-question').textContent,/Sağlık öyküsü 2/);
+}
+for(const correction of ['hayır','yanlış']){
+ const x=reachHealth();x.click('yes');x.speakDone();x.tick(3000);x.send(correction);assert.match(x.el('qa-question').textContent,/Sağlık öyküsü 1/);assert.equal(x.el('qa-confirm').hidden,true);x.tick(7000);assert.match(x.el('qa-question').textContent,/Sağlık öyküsü 1/);
+}
+for(const action of ['speech','interim','network','stop','hidden','opt-out']){
+ const x=reachHealth();x.click('yes');x.speakDone();
+ if(action==='speech')x.mic.onspeechstart();
+ if(action==='interim')x.send('yan',false);
+ if(action==='network')x.mic.onerror({error:'network'});
+ if(action==='stop')x.events['onam-stop']();
+ if(action==='hidden'){x.document.hidden=true;x.events.visibilitychange()}
+ if(action==='opt-out'){x.el('qa-auto').checked=false;x.el('qa-auto').onchange()}
+ x.tick(6000);assert.equal(x.el('qa-confirm').hidden,false,action);assert.match(x.el('qa-question').textContent,/Sağlık öyküsü 1/);
+}
+{
+ const x=setup();x.start();x.send('Ali Can tamam');x.speakDone();x.tick(10000);assert.match(x.el('qa-question').textContent,/Adınız/);
+ const y=reachHealth();for(let i=0;i<10;i++){y.click('no');y.click('confirm')}assert.match(y.el('qa-question').textContent,/Son beyan/);y.el('qa-answer').value='Okudum anladım onaylıyorum';y.click('submit');y.speakDone();y.tick(10000);assert.equal(y.el('qa-confirm').hidden,false);assert.match(y.el('qa-question').textContent,/Son beyan/);
+}
+console.log('PASS: health-only automatic progression after readback and six seconds of live correction listening; speech/errors/stop cancel; final declaration never automatic');

@@ -1,6 +1,6 @@
 <!doctype html><html lang="tr"><meta charset="utf-8"><link rel="stylesheet" href="../theme.css"><body><main><p>Yalnızca otomatik test: Bu ekran gerçek hasta kaydı oluşturmaz.</p><button id="qa-open" hidden>Başlat</button><section class="panel" id="qa-panel" aria-labelledby="qa-heading">
   <p class="step-label">03 / Bilgiler ve beyan</p><h2 id="qa-heading">Birlikte, adım adım tamamlayalım.</h2>
-  <p>Önce kimlik ve iletişim bilgileriniz, ardından 10 kısa sağlık öyküsü sorusu ve son beyanınız sorulur. Tarih ve saat otomatik doldurulur. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
+  <p>Önce kimlik ve iletişim bilgileriniz, ardından 10 kısa sağlık öyküsü sorusu ve son beyanınız sorulur. Tarih ve saat otomatik doldurulur. Cevabınız geri okunur. Sağlık yanıtı yanlışsa hayır veya yanlış diyerek düzeltebilirsiniz. Son beyanınız açık onayınız olmadan tamamlanmaz. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
   <label><input type="checkbox" id="qa-auto" checked> Soru bitince otomatik dinle</label>
   <p class="muted">Başlattıktan sonra mikrofon izni verin. Her soru ve cevap doğrulaması bittikten sonra konuşabilirsiniz. Ad-soyad ve tarih cevabınızı bitirince “tamam” deyin; duraksamalar cevabı bitirmez. “Baştan” diyerek cevabı temizleyebilirsiniz. Sağlık öyküsü sorularında evet veya hayır deyin. Bilmiyorsanız bilmiyorum deyin; bu yanıt ayrı kaydedilir. Evet yanıtından sonra istenen kısa açıklamayı tamam deyip bitirin. Tarih ve saat otomatik alınır; cevap vermeniz gerekmez. Gerekirse “Tarih ve saati düzelt” düğmesini kullanın. Ses alınamazsa mikrofon düğmesiyle tekrar deneyebilir veya yazabilirsiniz.</p>
@@ -15,6 +15,7 @@
       <button class="secondary" id="qa-yes" hidden>Evet</button>
       <button class="plain" id="qa-no" hidden>Hayır</button>
       <button class="secondary" id="qa-listen">Mikrofonla cevap ver</button>
+      <button class="plain" id="qa-type" hidden>Yazıyla devam et</button>
       <button class="plain" id="qa-repeat">Soruyu tekrar dinle</button>
       <button class="secondary" id="qa-submit">Cevabımı kontrol et</button>
       <button class="secondary" id="qa-confirm" hidden>Bilgilerim doğru</button>

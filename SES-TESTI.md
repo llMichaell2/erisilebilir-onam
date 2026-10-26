@@ -1,6 +1,6 @@
 # Sesli akış doğrulaması
 
-Otomatik dinleme açıkken, tarayıcının normal oturum sonlandırması veya `no-speech` hatasından sonra 600 ms beklenerek yeniden dinlenir. Önceki cevap korunur. Bir dinleme zincirinde en çok üç otomatik yeniden başlatma yapılır; toplam süre cevapta 120 saniye, doğrulamada 25 saniyedir. Süre veya deneme sınırı dolunca kullanıcı mikrofon düğmesiyle devam edebilir.
+Otomatik dinleme açıkken, tarayıcının normal oturum sonlandırması veya `no-speech` hatasından sonra 600 ms beklenerek yeniden dinlenir. Önceki cevap korunur. Bir dinleme zincirinde en çok altı otomatik yeniden başlatma yapılır; toplam süre cevapta 240 saniye, doğrulamada 45 saniyedir. Süre veya deneme sınırı dolunca kullanıcı mikrofon düğmesiyle devam edebilir.
 
 Durdur, yazmaya başlama, sekmeyi gizleme, sıfırlama, sessiz mod ve otomatik dinlemeyi kapatma bekleyen yeniden başlatmayı iptal eder. Ağ hatasında otomatik dinleme açıksa ve sayfa görünürse 1,8 saniye sonra yalnızca bir kez yeniden denenir. İzin ve mikrofon hataları otomatik tekrar edilmez. Kesilen oturumun geç gelen sonuçları yok sayılır. Geçici sonuçlarla onay verilmez.
 
@@ -38,3 +38,9 @@ Son beyanda başlangıçta veya cümle içinde tekrarlanan olumlu sözcükler ka
 Network hatası, tarayıcının tanıma servisine erişemediğini belirtir; normal web sayfalarının açılması bu servisin de erişilebilir olduğunu kanıtlamaz. Otomatik deneme en fazla bir kez yapılır, önceki cevap korunur. Durdur, yazı modu, sekme gizleme, tekrar dinleme veya manuel mikrofon başlatma bekleyen denemeyi iptal eder. Çevrimdışı durumda otomatik deneme yapılmaz. Geçici bir “evet” sonucu, bağlantı kesilince onay sayılmaz.
 
 Yazıyla devam et düğmesi otomatik dinlemeyi kapatır ve cevap alanını açar; hasta telefon klavyesinin sesle yazma özelliğini de kullanabilir. Sağlık sorularında Bilmiyorum yazılabilir ve ayrı değer olarak saklanır. Bu iyileştirme erişilemeyen konuşma servisini sağlayıcı tarafında onarmaz; gerçek cihazda farklı bağlantıyla karşılaştırmalı test gerekir.
+
+## Kısa yönlendirme ve sağlık yanıtını düzeltme
+
+Evet / Hayır / Bilmiyorum yönergesi sağlık bölümünün başında bir kez okunur; soruyu tekrar dinlemek bu yönergeyi tekrarlamaz. Sağlık ana sorularında, otomatik dinleme açıkken yanıt geri okunduktan ve mikrofon gerçekten başladıktan sonra 6 saniyelik düzeltme aralığı açılır. Bu sırada Hayır veya Yanlış denirse soru yeniden sorulur. Konuşma başlangıcı, geçici sonuç, hata, durdurma veya gizlenen sekme otomatik geçişi iptal eder. Belirsiz bir söz veya bağlantı hatasından sonra sessizlik onay sayılmaz; açık doğrulama gerekir. Kimlik bilgileri, açıklamalar ve son beyan bu otomatik geçişten yararlanmaz. Sessiz/yazılı modda doğrulama düğmeleri kullanılır.
+
+Barkod oluşturuldu mesajı yalnızca sunucu kaydı ve QR çizimi başarılı olduktan sonra seslendirilir. Kaydetme hatasında veya bilgiler temizlendikten sonra geç dönen yanıtta başarı mesajı söylenmez.

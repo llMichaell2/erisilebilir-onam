@@ -48,7 +48,21 @@
    paragraph('Hastanın beyanıdır. Bilmiyorum yanıtı Hayır anlamına gelmez. İşleme uygunluk değerlendirmesini sağlık çalışanı yapar.',{size:9,color:muted});
    const rows=window.OnamHealth.entries(health);
    if(!rows)paragraph('Bu sağlık öyküsünün sürümü desteklenmiyor. Personel değerlendirmesi gerekir.');
-   else for(const [index,row] of rows.entries()){ensure(80);paragraph((index+1)+'. '+row.prompt,{size:10.5,font:bold,leading:16,gap:5});paragraph('Yanıt: '+row.answer,{size:11,leading:16,gap:5});if(row.detail)paragraph('Açıklama: '+row.detail,{size:10.5,leading:16,gap:12});else y-=10}
+   else for(const [index,row] of rows.entries()){
+    const title=wrap((index+1)+'. '+row.prompt,bold,10.5,contentWidth-24),detail=row.detail?wrap('Açıklama: '+row.detail,regular,10,contentWidth-24):[];
+    const missing=!['Evet','Hayır','Bilmiyorum'].includes(row.answer);
+    const cardHeight=16+title.length*15+30+(detail.length?detail.length*14+8:0)+(missing?18:0);
+    if(y-cardHeight<68){addPage();paragraph('Sağlık öyküsü (devam)',{size:15,font:bold,leading:22,gap:10})}
+    const top=y;page.drawRectangle({x:margin,y:top-cardHeight,width:contentWidth,height:cardHeight,borderColor:line,borderWidth:.8,color:rgb(.975,.98,.99)});
+    let current=top-19;for(const text of title){page.drawText(text,{x:margin+12,y:current,size:10.5,font:bold,color:navy});current-=15}
+    const optionY=current-10;['Evet','Hayır','Bilmiyorum'].forEach((value,i)=>{
+     const x=margin+12+i*145,selected=row.answer===value;page.drawRectangle({x,y:optionY-1,width:10,height:10,borderColor:selected?navy:muted,borderWidth:.9,color:rgb(1,1,1)});
+     if(selected){page.drawLine({start:{x:x+2,y:optionY+4},end:{x:x+4.5,y:optionY+1.5},thickness:1.4,color:navy});page.drawLine({start:{x:x+4.5,y:optionY+1.5},end:{x:x+8.5,y:optionY+7},thickness:1.4,color:navy})}
+     page.drawText(value,{x:x+16,y:optionY,size:10,font:selected?bold:regular,color:selected?navy:muted});
+    });
+    current=optionY-21;for(const text of detail){page.drawText(text,{x:margin+12,y:current,size:10,font:regular,color:navy});current-=14}
+    if(missing)page.drawText('Yanıt bulunamadı',{x:margin+12,y:current,size:10,font:regular,color:muted});y=top-cardHeight-12;
+   }
   }
   addPage();paragraph('Onaylanan bilgilendirme metni',{size:20,font:bold,leading:28,gap:16});
   for(const section of report.formSnapshot){heading(section.title);paragraph(section.text,{size:10.5,leading:16,gap:16})}

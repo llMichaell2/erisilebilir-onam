@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f8fc">
 <title>Onam Formu – Sesli Okuyucu</title>
-<link rel="stylesheet" href="theme.css?v=34">
+<link rel="stylesheet" href="theme.css?v=37">
 </head>
 <body>
 <dialog id="welcome-dialog" aria-labelledby="welcome-title" aria-describedby="welcome-description welcome-audio-note">
@@ -73,7 +73,7 @@
 
 <section class="panel" id="qa-panel" aria-labelledby="qa-heading">
   <p class="step-label">03 / Bilgiler ve beyan</p><h2 id="qa-heading">Birlikte, adım adım tamamlayalım.</h2>
-  <p>Önce kimlik ve iletişim bilgileriniz, ardından 10 kısa sağlık öyküsü sorusu ve son beyanınız sorulur. Tarih ve saat otomatik doldurulur. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
+  <p>Önce kimlik ve iletişim bilgileriniz, ardından 10 kısa sağlık öyküsü sorusu ve son beyanınız sorulur. Tarih ve saat otomatik doldurulur. Cevabınız geri okunur. Sağlık yanıtı yanlışsa hayır veya yanlış diyerek düzeltebilirsiniz. Son beyanınız açık onayınız olmadan tamamlanmaz. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
   <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
   <label><input type="checkbox" id="qa-auto" checked> Soru bitince otomatik dinle</label>
   <p class="muted">Başlattıktan sonra mikrofon izni verin. Her soru ve cevap doğrulaması bittikten sonra konuşabilirsiniz. Ad-soyad ve tarih cevabınızı bitirince “tamam” deyin; duraksamalar cevabı bitirmez. “Baştan” diyerek cevabı temizleyebilirsiniz. Sağlık öyküsü sorularında evet veya hayır deyin. Bilmiyorsanız bilmiyorum deyin; bu yanıt ayrı kaydedilir. Evet yanıtından sonra istenen kısa açıklamayı tamam deyip bitirin. Tarih ve saat otomatik alınır; cevap vermeniz gerekmez. Gerekirse “Tarih ve saati düzelt” düğmesini kullanın. Ses alınamazsa mikrofon düğmesiyle tekrar deneyebilir veya yazabilirsiniz.</p>
@@ -249,7 +249,7 @@
  window.onamAudio={stop:stopAll,isBusy:()=>isReading,speak:(message,done,parts)=>{if(window.onamSilent){isReading=false;done?.();return}speakText(message,()=>{isReading=false;done?.()},false,parts)}};
  const welcome=document.getElementById('welcome-dialog');
  const welcomeMessage='Erişilebilir onam formuna hoş geldiniz. Formu dinlemek için Sesli başlat düğmesini seçin. Okuyarak ilerlemek için Sessiz, kendim okuyacağım düğmesini seçin.';
- const usageMessage='Sesli kullanım başladı. Önce formun altı bölümü sırayla okunacak. Ekran okunan bölüme ilerleyecek. Okuma sırasında alt tarafta Duraklat, Devam et ve Durdur düğmeleri bulunur. Sonra bilgileriniz ve 10 kısa sağlık öyküsü sorusu sorulacak. Sağlık sorularında evet veya hayır deyin. Bilmiyorsanız bilmiyorum deyin. İstenen kısa açıklamayı bitirince tamam deyin. Ad-soyad ve doğum tarihi cevabınızı söyledikten sonra tamam deyin. T.C. ve telefon rakamlarını tek tek söyleyin. Baştan diyerek cevabı temizleyebilirsiniz. Tarih ve saat otomatik doldurulacak; cevap vermeniz gerekmiyor. Son beyan geri okunduktan sonra onaylıyorum diyerek bitirin.';
+ const usageMessage='Sesli kullanım başladı. Önce formun altı bölümü sırayla okunacak. Ekran okunan bölüme ilerleyecek. Okuma sırasında alt tarafta Duraklat, Devam et ve Durdur düğmeleri bulunur. Sonra bilgileriniz ve 10 kısa sağlık öyküsü sorusu sorulacak. Ad-soyad ve doğum tarihi cevabınızı söyledikten sonra tamam deyin. T.C. ve telefon rakamlarını tek tek söyleyin. Baştan diyerek cevabı temizleyebilirsiniz. Tarih ve saat otomatik doldurulacak; cevap vermeniz gerekmiyor. Son beyan geri okunduktan sonra onaylıyorum diyerek bitirin.';
  function chooseSilent(){window.onamSilent=true;stopAll();const automatic=document.getElementById('qa-auto');if(automatic)automatic.checked=false;document.getElementById('qa-open').focus()}
  document.getElementById('welcome-start').onclick=()=>{
   welcome.close();window.onamSilent=false;const automatic=document.getElementById('qa-auto');if(automatic)automatic.checked=true;
@@ -277,9 +277,9 @@
 <script src="records.js?v=25"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="qr-ui.js?v=11"></script>
-<script src="medical-history.js?v=34"></script>
-<script src="pdf-export.js?v=34"></script>
-<script src="qa.js?v=35"></script>
+<script src="medical-history.js?v=37"></script>
+<script src="pdf-export.js?v=37"></script>
+<script src="qa.js?v=37"></script>
 <script src="accessibility.js?v=11"></script>
 <script src="interface-guide.js?v=34"></script>
 </body>
