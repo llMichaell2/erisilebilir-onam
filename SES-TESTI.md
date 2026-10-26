@@ -2,7 +2,7 @@
 
 Otomatik dinleme açıkken, tarayıcının normal oturum sonlandırması veya `no-speech` hatasından sonra 600 ms beklenerek yeniden dinlenir. Önceki cevap korunur. Bir dinleme zincirinde en çok üç otomatik yeniden başlatma yapılır; toplam süre cevapta 120 saniye, doğrulamada 25 saniyedir. Süre veya deneme sınırı dolunca kullanıcı mikrofon düğmesiyle devam edebilir.
 
-Durdur, yazmaya başlama, sekmeyi gizleme, sıfırlama, sessiz mod ve otomatik dinlemeyi kapatma bekleyen yeniden başlatmayı iptal eder. Ağ, izin ve mikrofon hataları otomatik tekrar edilmez. Kesilen oturumun geç gelen sonuçları yok sayılır. Geçici sonuçlarla onay verilmez.
+Durdur, yazmaya başlama, sekmeyi gizleme, sıfırlama, sessiz mod ve otomatik dinlemeyi kapatma bekleyen yeniden başlatmayı iptal eder. Ağ hatasında otomatik dinleme açıksa ve sayfa görünürse 1,8 saniye sonra yalnızca bir kez yeniden denenir. İzin ve mikrofon hataları otomatik tekrar edilmez. Kesilen oturumun geç gelen sonuçları yok sayılır. Geçici sonuçlarla onay verilmez.
 
 Ad-soyadda tanıma hizmetinin eklediği noktalama temizlenir; Türkçe harfler, çok parçalı adlar, kısa adlar, kesme işareti ve birleşik adlardaki tire korunur. Hasta söylediği ad-soyadı geri okumada doğrular; uygulama ismi tahmin ederek değiştirmez. Cevap sonunda “tamam” veya “bitti” denmelidir.
 
@@ -32,3 +32,9 @@ Tarayıcının Türkçe konuşma tanıma hizmetindeki ağ/kullanılabilirlik sor
 Tarih-saat otomatik doldurulur; soru akışı beş sorudur. Gerekirse son beyandan önce “Tarih ve saati düzelt” düğmesiyle tarih-saat düzenlenip doğrulanır. “Doğru doğru” gibi tekrarlar otomatik tarihi silmez ve son beyan yerine geçmez.
 
 Son beyanda başlangıçta veya cümle içinde tekrarlanan olumlu sözcükler kabul edilir; örneğin “Onaylıyorum okudum anladım onaylıyorum”. Okudum–anladım–onaylıyorum sırası ve ayrı son doğrulama gerekir. Yalnızca “onaylıyorum” ilk aşamada yeterli değildir; tam beyan yeniden istenir. Olumsuz veya ek belirsiz sözcükler içeren cümleler kabul edilmez. Tamamlanmamış geçerli cümleler biriktirilir; geçersiz denemede açıklama yapılıp temiz bir denemeye geçilir.
+
+## Konuşma servisi bağlantı hatası
+
+Network hatası, tarayıcının tanıma servisine erişemediğini belirtir; normal web sayfalarının açılması bu servisin de erişilebilir olduğunu kanıtlamaz. Otomatik deneme en fazla bir kez yapılır, önceki cevap korunur. Durdur, yazı modu, sekme gizleme, tekrar dinleme veya manuel mikrofon başlatma bekleyen denemeyi iptal eder. Çevrimdışı durumda otomatik deneme yapılmaz. Geçici bir “evet” sonucu, bağlantı kesilince onay sayılmaz.
+
+Yazıyla devam et düğmesi otomatik dinlemeyi kapatır ve cevap alanını açar; hasta telefon klavyesinin sesle yazma özelliğini de kullanabilir. Sağlık sorularında Bilmiyorum yazılabilir ve ayrı değer olarak saklanır. Bu iyileştirme erişilemeyen konuşma servisini sağlayıcı tarafında onarmaz; gerçek cihazda farklı bağlantıyla karşılaştırmalı test gerekir.

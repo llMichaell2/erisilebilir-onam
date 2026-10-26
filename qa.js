@@ -14,7 +14,7 @@
   ...H.definitions.flatMap((q,index)=>[{key:'history_'+q.id,label:q.label,prompt:q.prompt,medical:true,medicalNumber:index+1,clean:H.parseAnswer,error:'Lütfen evet veya hayır deyin. Bilmiyorsanız bilmiyorum diyebilirsiniz.'},...(q.follow?[{key:'detail_'+q.id,label:q.label+' açıklaması',prompt:q.follow+' Bilmiyorsanız bilmiyorum deyin. Açıklamanız bitince tamam deyin.',medicalDetail:true,parent:'history_'+q.id,medicalNumber:index+1,validate:H.detailError}]:[])]),
   {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
- let dateReturnStep=0,editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
+ let typingAnswer=false,dateReturnStep=0,editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').normalize('NFC').replace(/[\p{P}]/gu,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  // Match only complete positive clauses; tolerate repetition, never ignore unknown/negative words.
@@ -45,17 +45,18 @@
   },parts);
  }
  function controls(){
-  const confirm=phase==='confirm',binary=!!questions[step]?.medical&&!confirm,typedBinary=binary&&(!Recognition||window.onamSilent||!$('auto').checked);
+  const confirm=phase==='confirm',binary=!!questions[step]?.medical&&!confirm,typedBinary=binary&&(typingAnswer||!Recognition||window.onamSilent||!$('auto').checked);
   $('yes').hidden=$('no').hidden=!binary;$('answer').hidden=binary&&!typedBinary;document.getElementById('qa-answer-label').hidden=binary&&!typedBinary;
   $('answer').maxLength=questions[step]?.medicalDetail?120:150;
   $('confirm').hidden=!confirm;$('correct').hidden=!confirm;
   $('submit').hidden=confirm||(binary&&!typedBinary);$('answer').readOnly=confirm;
   $('confirm').textContent=questions[step]?.final?'Beyanımı tamamla':'Bilgilerim doğru';
+  $('type').hidden=!!(confirm||!Recognition||!$('auto').checked||window.onamSilent);
   $('listen').disabled=!Recognition;
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
  }
  function ask(){
-  let autoDate=false;
+  typingAnswer=false;let autoDate=false;
   if(questions[step].key==='dateTime'&&!editingDate){answers.dateTime={value:V.dateTime(V.localNow()),confirmedAt:new Date().toISOString(),source:'device'};step++;autoDate=true}
   while(questions[step]?.medicalDetail&&answers[questions[step].parent]?.value!=='Evet')step++;
   phase='answer';answerDraft='';candidate='';spokenDeclaration='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
@@ -140,7 +141,7 @@
   if(!Recognition||!['answer','confirm'].includes(phase))return;
   abortMic();window.onamAudio.stop();
   const token=generation;const expectedPhase=phase;const expectedStep=step;
-  const budget=recovery&&typeof recovery.startedAt==='number'?recovery:{startedAt:Date.now(),attempts:0};
+  const budget=recovery&&typeof recovery.startedAt==='number'?recovery:{startedAt:Date.now(),attempts:0,networkAttempts:0};
   const limit=phase==='answer'?120000:25000;
   const rec=new Recognition();recognition=rec;rec.lang='tr-TR';rec.continuous=collectingAnswer();rec.interimResults=true;rec.maxAlternatives=1;
   let resultReceived=false,failed=false,ended=false,pending='';
@@ -189,6 +190,22 @@
   };
   rec.onerror=e=>{
    if(token!==generation||ended)return;
+   if(e.error==='network'){
+    if(collectMode&&pending){answerDraft=pending.replace(/(?:^|\s)(?:cevabım bitti|tamam|bitti)[.,!?]*$/iu,'').trim();$('answer').value=answerDraft}
+    failed=true;abortMic();const retryToken=generation,offline=window.navigator?.onLine===false;
+    const canRetry=!offline&&$('auto').checked&&!window.onamSilent&&!document.hidden&&(budget.networkAttempts||0)<1&&budget.attempts<3&&Date.now()-budget.startedAt+1800<limit;
+    if(canRetry){
+     $('status').textContent=(answerDraft?'Söyledikleriniz korundu. ':'')+'Konuşma hizmeti bağlantısı kesildi. Bir kez yeniden deneniyor. İsterseniz yazıyla devam edebilirsiniz.';
+     restartTimer=setTimeout(()=>{
+      restartTimer=null;if(retryToken!==generation||phase!==expectedPhase||step!==expectedStep||document.hidden||!$('auto').checked||window.onamSilent)return;
+      if(Date.now()-budget.startedAt>=limit)return;
+      listen({...budget,attempts:budget.attempts+1,networkAttempts:(budget.networkAttempts||0)+1});
+     },1800);return;
+    }
+    typingAnswer=true;controls();$('listen').textContent='Mikrofonu yeniden dene';
+    const message=(offline?'Tarayıcı çevrimdışı görünüyor. ':'')+(phase==='confirm'?'Sesli doğrulama hizmetine bağlanılamadı. Yanıtınız korundu. Doğrulama veya düzeltme düğmelerini kullanabilir ya da mikrofonu yeniden deneyebilirsiniz.':'Konuşma hizmetine bağlanılamadı. Söyledikleriniz korundu. Mikrofonu yeniden deneyebilir veya Yazıyla devam et düğmesini kullanabilirsiniz.');
+    $('status').textContent=message;window.onamAudio.speak(message,()=>{});return;
+   }
    if(e.error==='no-speech'){$('status').textContent='Ses duyulmadı. Dinleme yeniden açılacak; yazıyla da devam edebilirsiniz.';return}
    failed=true;abortMic();
    const messages={'not-allowed':'Mikrofon izni verilmedi. Chrome site ayarlarından izin verebilir veya cevabınızı yazabilirsiniz.','service-not-allowed':'Konuşma tanıma hizmeti kullanılamıyor. Yazıyla devam edebilirsiniz.','audio-capture':'Mikrofon bulunamadı. Bağlantıyı kontrol edin veya yazıyla devam edin.','no-speech':'Ses duyulmadı. Tekrar deneyin veya cevabınızı yazın.','network':'Konuşma tanıma hizmetine ulaşılamadı. İnterneti kontrol edin veya yazıyla devam edin.','aborted':'Mikrofon durduruldu.'};
@@ -206,7 +223,7 @@
      restartTimer=null;
      if(token!==generation||phase!==expectedPhase||step!==expectedStep||document.hidden||!$('auto').checked||window.onamSilent)return;
      if(Date.now()-budget.startedAt>=limit){$('status').textContent='Dinleme süresi doldu. Söyledikleriniz korundu. Mikrofon düğmesiyle veya yazıyla devam edebilirsiniz.';return}
-     listen({startedAt:budget.startedAt,attempts:budget.attempts+1});
+     listen({...budget,attempts:budget.attempts+1});
     },600);return;
    }
    if(!resultReceived&&!failed){$('listen').textContent='Mikrofonla devam et';$('status').textContent=(answerDraft?'Söyledikleriniz korundu. ':'')+'Dinleme sona erdi. Mikrofon düğmesiyle devam edebilir veya yazabilirsiniz.'}
@@ -225,6 +242,7 @@
  $('answer').oninput=()=>{answerDraft=$('answer').value.trim();abortMic()};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
  $('date-edit').onclick=()=>{if(!['answer','confirm'].includes(phase)||!answers.dateTime)return;abortMic();dateReturnStep=step;editingDate=true;step=4;ask();$('answer').value=answers.dateTime.value};
+ $('type').onclick=()=>{if(phase!=='answer')return;abortMic();window.onamAudio.stop();typingAnswer=true;$('auto').checked=false;controls();$('answer').focus();$('status').textContent='Yazıyla devam edebilirsiniz. Önceki yanıtınız korundu. Telefon klavyenizin sesle yazma özelliğini de kullanabilirsiniz.'};
  $('yes').onclick=()=>submit('Evet');$('no').onclick=()=>submit('Hayır');
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questionSpeech,phase==='confirm'?confirmationParts:undefined);

@@ -49,12 +49,44 @@ console.log('PASS: pending recovery cancelled by stop/reset/typing/hidden tab/op
  const y=setup();y.start();y.mic.onend();y.tick(120000);assert.equal(y.starts,1);assert.match(y.el('qa-status').textContent,/süresi doldu/);
  console.log('PASS: silence recovery bounded to three retries and original session deadline');
 }
-for(const error of ['network','not-allowed','service-not-allowed','audio-capture','aborted']){
+for(const error of ['not-allowed','service-not-allowed','audio-capture','aborted']){
  const x=setup();x.start();x.send('Ayşe');x.mic.onerror({error});x.mic.onend();x.tick(1000);assert.equal(x.starts,1,error);assert.equal(x.el('qa-answer').value,'Ayşe');
 }
-console.log('PASS: permission/network/device errors stop recovery and preserve text');
+console.log('PASS: permission/device errors stop recovery and preserve text');
 
 {
  const x=setup();x.start();x.send('Ali Veli tamam',false);x.mic.onend();assert.equal(x.el('qa-confirm').hidden,true);assert.equal(x.el('qa-answer').value,'Ali Veli');x.tick(600);x.send('tamam');assert.equal(x.el('qa-answer').value,'Ali Veli');assert.equal(x.el('qa-confirm').hidden,false);
  console.log('PASS: provisional completion waits for final confirmation and does not become part of the name');
 }
+
+{
+ const x=setup();x.start();x.send('Ayşe');const stale=x.mic;x.mic.onerror({error:'network'});stale.onend();x.send('Yanlış Geç Sonuç tamam',true,stale);assert.equal(x.el('qa-answer').value,'Ayşe');x.tick(1799);assert.equal(x.starts,1);x.tick(1);assert.equal(x.starts,2);x.send('Yılmaz tamam');assert.equal(x.el('qa-answer').value,'Ayşe Yılmaz');assert.equal(x.el('qa-confirm').hidden,false);
+ console.log('PASS: one network retry preserves partial answer and rejects late callbacks');
+}
+{
+ const x=setup();x.start();x.mic.onerror({error:'network'});x.tick(1800);assert.equal(x.starts,2);x.mic.onerror({error:'network'});x.mic.onend();x.tick(60000);x.speakDone();assert.equal(x.starts,2);assert.match(x.el('qa-status').textContent,/Yazıyla devam et/);assert.equal(x.el('qa-type').hidden,false);
+ x.click('type');assert.equal(x.el('qa-auto').checked,false);assert.equal(x.el('qa-answer').hidden,false);
+ console.log('PASS: repeated network failures stop after one retry; typing remains available and no automatic microphone loop');
+}
+for(const action of ['stop','reset','type','hidden','opt-out','silent','repeat','manual']){
+ const x=setup();x.start();x.mic.onerror({error:'network'});const before=x.starts;
+ if(action==='stop')x.events['onam-stop']();
+ if(action==='reset')x.click('reset');
+ if(action==='type')x.click('type');
+ if(action==='hidden'){x.document.hidden=true;x.events.visibilitychange()}
+ if(action==='opt-out'){x.el('qa-auto').checked=false;x.el('qa-auto').onchange()}
+ if(action==='silent')x.window.onamSilent=true;
+ if(action==='repeat')x.click('repeat');
+ if(action==='manual')x.click('listen');
+ x.tick(1800);assert.equal(x.starts,before+(action==='manual'?1:0),action);
+}
+{
+ const x=setup();x.start();x.send('Ali Can tamam');x.speakDone();x.send('evet',false);x.mic.onerror({error:'network'});x.tick(1800);assert.match(x.el('qa-question').textContent,/Adınız/);assert.equal(x.el('qa-confirm').hidden,false);x.send('doğru');assert.match(x.el('qa-question').textContent,/T.C./);
+}
+{
+ const x=setup();x.start();x.window.navigator={onLine:false};x.mic.onerror({error:'network'});x.tick(1800);assert.equal(x.starts,1);assert.match(x.el('qa-status').textContent,/çevrimdışı/);
+}
+{
+ const x=setup();x.start();for(const v of ['Test Hasta','10000000146','05.10.2005','05381234567']){x.el('qa-answer').value=v;x.click('submit');x.click('confirm')}x.speakDone();x.mic.onerror({error:'network'});x.tick(1800);x.mic.onerror({error:'network'});assert.equal(x.el('qa-answer').hidden,false);x.click('type');x.el('qa-answer').value='Bilmiyorum';x.click('submit');assert.equal(x.el('qa-answer').value,'Bilmiyorum');x.click('confirm');assert.match(x.el('qa-question').textContent,/Sağlık öyküsü 2/);assert.equal(x.el('qa-auto').checked,false);
+}
+console.log('PASS: network recovery honours cancellation, offline state, confirmation safety and typed unknown health answers');
