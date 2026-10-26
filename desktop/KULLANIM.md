@@ -27,3 +27,7 @@ Aktif formlar listesinden kayıt seçip Seçilenleri arşive kaldır düğmesine
 Molada / Kilitle düğmesi mevcut personel oturumunu kapatır, hasta listesini temizler ve uygulama içinden açılan belge pencerelerini kapatır. Kilit penceresinde aynı personel hesabının şifresi yeniden Supabase ile doğrulanır. Yanlış şifre veya ağ hatasında kayıtlar açılmaz. Kilit penceresinden çıkış yaparak ana sayfaya dönüp başka hesapla giriş yapılabilir. Bilgisayardaki başka programları kilitlemek için Windows kilidini kullanın.
 
 Ana sayfa ve giriş ekranında 9 tanıtım slaytı bulunur. Yönetim menüsündeki kompakt “İnsana dair” kutusunda 8 söz 12 saniyede bir yumuşak geçişle değişir; ileri, geri ve duraklatma düğmeleri kullanılabilir. Azaltılmış hareket tercihinde otomatik geçişler kapalıdır. Hasta formuna söz eklenmez.
+
+## Bağlantı ve oturum yenileme
+
+Geçici bağlantı veya sunucu hatasında oturum kapatılmaz. Varsa son yüklenen kayıtlar gösterilir; arşiv işlemleri liste yeniden doğrulanana kadar kapalıdır. Ekrandaki Yenile düğmesiyle tekrar deneyebilirsiniz. Oturumun yenileme anahtarı geçersizse veya personel yetkisi kaldırılmışsa yeniden giriş gerekir. Şifreler ve oturum anahtarları diske kaydedilmez; uygulamayı kapatıp açınca yeniden giriş yapılır.
