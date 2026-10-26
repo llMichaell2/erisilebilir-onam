@@ -128,3 +128,11 @@ Mevcut kurulumun üzerine database/archive-admin.sql dosyasını Supabase SQL Ed
 Windows uygulamasının C# kaynakları ve derleme komutu desktop/ altında bulunur. WebView2 tabanlı uygulama aynı Supabase'e bağlanır; açık oturumda liste 15 saniyede bir yenilenir. Internet ve Windows x64/WebView2 gerekir. Uygulama dosyaları birlikte dağıtılır; test paketi kod imzalı değildir. config.js içindeki publicSiteUrl, masaüstünde QR adresinin yerel bilgisayar alan adına dönüşmesini önler. Web kullanıcıları aynı genel belge adresini kullanır.
 
 Kontroller: tests/archive-admin.cjs gerçek PostgreSQL motoruyla arşivleme/geri alma, kimlik/yetki, değişmeyen hasta QR/form içeriği, audit olayları ve atomik hataları sınar. tests/admin-archive-browser.cjs seçim/onay/iptal, aynı QR, geri alma, eski SQL'ye geçiş ve responsive düzeni taklit HTTP ile sınar. Windows EXE yerel açılış testinde giriş ekranı ve Windows uygulaması etiketi doğrulanır; gerçek kullanıcı şifresiyle giriş veya canlı hasta verisi değişikliği yapılmaz.
+
+## Sağlık öyküsü soru akışı
+
+Kimlik ve iletişim bilgilerinden sonra, son beyandan önce 10 ortak MR/BT sağlık öyküsü sorusu sorulur. Ana düğmeler Evet/Hayır; sesli “bilmiyorum” yanıtı ayrı Bilmiyorum değeri olarak geri okunup doğrulanır. Evet yanıtlarında gereken kısa açıklama alınır; Hayır ve Bilmiyorum ek açıklamayı atlar. Klinik uygunluk kararı verilmez.
+
+Sürüm: health-history-v1. Yanıtlar mevcut altı alanlı answers nesnesinin declaration.healthHistory alanında sürümlü metadata olarak saklanır; sunucunun var olan JSONB ve QR uçlarıyla uyumludur. Yeni SQL kurulumu gerekmez. Açıklamalar 120 karakter ve 180 UTF-8 bayt ile sınırlıdır; altı temel alan ve toplam 6000 bayt sunucu sınırı korunur. Eski kayıtlar açılır; sağlık öyküsü bulunmadığı belirtilir. Form ayrıntısında ve PDF’de sağlık soruları gösterilir. Yeni sürümde soru metni değiştirilecekse eski sürümün anlamını korumak için yeni sağlık öyküsü sürümü tanımlanmalıdır.
+
+Kontroller: node tests/health-history.cjs; node tests/health-history-database.cjs. Veritabanı testi @electric-sql/pglite kullanır ve üretim Supabase projesine yazmaz. Yeni sorular klinik kullanım öncesi radyoloji ekibi tarafından gözden geçirilmelidir.

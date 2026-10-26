@@ -18,7 +18,7 @@
   'go-current':'Ekranı ve klavye odağını o anda okunan form bölümünün başlığına taşır.',
   'voice-select':'Cevapların geri okunacağı cihaz sesini seçer. Seçim sonraki seslendirmede kullanılır.',
   'qa-auto':'Açıksa soru ve geri okuma bittikten sonra mikrofonun otomatik başlamasını dener. Mikrofon izni gerekir.',
-  'qa-start':'Hasta bilgileri ve son beyan için beş soruluk akışı başlatır.',
+  'qa-start':'Hasta bilgileri, on sağlık öyküsü sorusu ve son beyan akışını başlatır.',
   'qa-answer':'Sorulan bilginin cevap alanıdır. Konuşmak istemezseniz cevabınızı yazabilirsiniz. Buradaki kişisel bilgi sesli düğme rehberi tarafından okunmaz.',
   'qa-listen':'Mikrofonu başlatır veya yeniden başlatır. Korunan cevabınıza devam edebilirsiniz. İzin istenirse tarayıcıdan mikrofon izni verin.',
   'qa-repeat':'Şu anki soruyu veya cevap doğrulamasını yeniden okur.',

@@ -41,6 +41,15 @@
    page.drawText('Bu PDF ve QR kişisel bilgiler içerir.',{x,y:top-66,size:8,font:regular,color:muted});y=bottom-24;
   }else paragraph('Sunucu kaydı doğrulanmadı. Bu PDF, açık sayfada tamamlanan beyanın kopyasıdır. Kayıt başarılı olmadığı için QR bağlantısı eklenmedi.',{size:10,color:muted});
   paragraph('Bu kayıt hasta beyanını gösterir; resmî kimlik doğrulaması veya elektronik imza değildir.',{size:8.5,color:muted});
+  const health=report.answers.declaration?.healthHistory;
+  if(health){
+   if(!window.OnamHealth)throw Error('Sağlık öyküsü PDF bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.');
+   addPage();paragraph('Sağlık öyküsü yanıtları',{size:20,font:bold,leading:28,gap:16});
+   paragraph('Hastanın beyanıdır. Bilmiyorum yanıtı Hayır anlamına gelmez. İşleme uygunluk değerlendirmesini sağlık çalışanı yapar.',{size:9,color:muted});
+   const rows=window.OnamHealth.entries(health);
+   if(!rows)paragraph('Bu sağlık öyküsünün sürümü desteklenmiyor. Personel değerlendirmesi gerekir.');
+   else for(const [index,row] of rows.entries()){ensure(80);paragraph((index+1)+'. '+row.prompt,{size:10.5,font:bold,leading:16,gap:5});paragraph('Yanıt: '+row.answer,{size:11,leading:16,gap:5});if(row.detail)paragraph('Açıklama: '+row.detail,{size:10.5,leading:16,gap:12});else y-=10}
+  }
   addPage();paragraph('Onaylanan bilgilendirme metni',{size:20,font:bold,leading:28,gap:16});
   for(const section of report.formSnapshot){heading(section.title);paragraph(section.text,{size:10.5,leading:16,gap:16})}
   for(const [index,current] of pdf.getPages().entries()){current.drawLine({start:{x:margin,y:49},end:{x:width-margin,y:49},thickness:.6,color:line});current.drawText('Erişilebilir Onam - Hasta beyanı kopyası',{x:margin,y:33,size:8,font:regular,color:muted});current.drawText((index+1)+' / '+pdf.getPageCount(),{x:width-margin-30,y:33,size:8,font:regular,color:muted});}

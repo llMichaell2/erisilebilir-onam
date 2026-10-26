@@ -7,7 +7,7 @@ function setup(){
  class Clock extends Date{static now(){return now}}
  const box={window,document,Date:Clock,fetch:async()=>({ok:false}),setTimeout:(f,ms)=>{timers.set(++id,{f,at:now+ms});return id},clearTimeout:k=>timers.delete(k)};
  vm.createContext(box);vm.runInContext(fs.readFileSync(path.join(__dirname,'../validation.js'),'utf8'),box);window.OnamValidation=box.OnamValidation;
- vm.runInContext(fs.readFileSync(path.join(__dirname,'../qa.js'),'utf8'),box);
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../medical-history.js'),'utf8'),box);vm.runInContext(fs.readFileSync(path.join(__dirname,'../qa.js'),'utf8'),box);
  const tick=ms=>{now+=ms;for(const [key,t] of [...timers])if(t.at<=now){timers.delete(key);t.f()}};
  const send=(text,final=true,target=mic)=>target.onresult({results:[Object.assign([{transcript:text}],{isFinal:final})]});
  return {window,document,events,el,tick,send,get mic(){return mic},get starts(){return starts},start(){el('qa-start').onclick();done()},speakDone(){done()},click:k=>el('qa-'+k).onclick()};

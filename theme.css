@@ -23,3 +23,7 @@ html:not(.high-contrast) .patient-hero{background:linear-gradient(120deg,#162b4a
 #qa-answer{border-width:2px;font-size:1.2rem}
 #qa-date-info{margin-bottom:20px}#qa-date-info p{margin-bottom:10px}
 @media(max-width:640px){#qa-actions{display:grid;grid-template-columns:1fr}#qa-actions button{width:100%;min-height:56px}#qa-date-info button{width:100%}}
+
+/* Health-history responses keep text readable on screen and in print. */
+.health-response{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;break-inside:avoid}.health-response h3{font-size:1rem;line-height:1.55;margin:0 0 12px}.health-response p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.health-note{font-size:.9rem;color:var(--muted);padding:14px;border-left:3px solid var(--teal);background:var(--mint)}#qa-yes,#qa-no{min-width:110px}
+@media print{.health-response{box-shadow:none;border-color:#bbb}.health-note{background:white;color:black}}

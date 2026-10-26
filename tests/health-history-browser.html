@@ -1,0 +1,45 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><link rel="stylesheet" href="../theme.css"><body><main><p>Yalnızca otomatik test: Bu ekran gerçek hasta kaydı oluşturmaz.</p><button id="qa-open" hidden>Başlat</button><section class="panel" id="qa-panel" aria-labelledby="qa-heading">
+  <p class="step-label">03 / Bilgiler ve beyan</p><h2 id="qa-heading">Birlikte, adım adım tamamlayalım.</h2>
+  <p>Önce kimlik ve iletişim bilgileriniz, ardından 10 kısa sağlık öyküsü sorusu ve son beyanınız sorulur. Tarih ve saat otomatik doldurulur. Cevabınız geri okunur; siz doğrulamadan sonraki soruya geçilmez. Son beyanınızı tamamladığınızda form, kayıt bağlantısı açıksa sisteme gönderilir. Kaydın başarılı olup olmadığı sonuç ekranında gösterilir.</p>
+  <p class="notice">Mikrofonla konuşma Chrome’un çevrimiçi konuşma tanıma hizmetine gönderilebilir. Kullanmak istemezseniz cevabınızı yazabilirsiniz. </p>
+  <label><input type="checkbox" id="qa-auto" checked> Soru bitince otomatik dinle</label>
+  <p class="muted">Başlattıktan sonra mikrofon izni verin. Her soru ve cevap doğrulaması bittikten sonra konuşabilirsiniz. Ad-soyad ve tarih cevabınızı bitirince “tamam” deyin; duraksamalar cevabı bitirmez. “Baştan” diyerek cevabı temizleyebilirsiniz. Sağlık öyküsü sorularında evet veya hayır deyin. Bilmiyorsanız bilmiyorum deyin; bu yanıt ayrı kaydedilir. Evet yanıtından sonra istenen kısa açıklamayı tamam deyip bitirin. Tarih ve saat otomatik alınır; cevap vermeniz gerekmez. Gerekirse “Tarih ve saati düzelt” düğmesini kullanın. Ses alınamazsa mikrofon düğmesiyle tekrar deneyebilir veya yazabilirsiniz.</p>
+  <button class="secondary" id="qa-start">Soru–cevabı başlat</button>
+  <div id="qa-work" hidden>
+    <div id="qa-date-info" class="notice" hidden><p>Formun tarih ve saati: <strong id="qa-date-value"></strong></p><button class="plain" id="qa-date-edit">Tarih ve saati düzelt</button></div>
+    <h3 id="qa-question" tabindex="-1"></h3>
+    <p id="qa-status" role="status" aria-live="polite"></p>
+    <label id="qa-answer-label" for="qa-answer">Cevabınız</label>
+    <input id="qa-answer" autocomplete="off" required maxlength="150" aria-describedby="qa-status">
+    <div id="qa-actions">
+      <button class="secondary" id="qa-yes" hidden>Evet</button>
+      <button class="plain" id="qa-no" hidden>Hayır</button>
+      <button class="secondary" id="qa-listen">Mikrofonla cevap ver</button>
+      <button class="plain" id="qa-repeat">Soruyu tekrar dinle</button>
+      <button class="secondary" id="qa-submit">Cevabımı kontrol et</button>
+      <button class="secondary" id="qa-confirm" hidden>Bilgilerim doğru</button>
+      <button class="plain" id="qa-correct" hidden>Düzelteceğim</button>
+
+      <button class="plain" id="qa-reset">Durdur ve bilgileri sil</button>
+    </div>
+  </div>
+  <div id="qa-result" hidden>
+    <h3>Onaylanan form</h3>
+    <p id="qa-kind-message">Geçmiş olsun. Sağlıklı günler dileriz.</p>
+    <p id="qa-summary"></p>
+    <p id="qa-save-status" role="status" aria-live="polite"></p>
+    <button class="secondary" id="qa-save-retry" hidden>Kaydetmeyi tekrar dene</button>
+    <div id="qa-receipt" hidden>
+      <h3>Form erişim QR kodu</h3>
+      <div id="qa-qr" role="img" aria-label="Onaylanan formu doktor ekranında açan QR kod"></div>
+      <button class="secondary" id="qa-qr-download">QR kodunu telefonuma indir</button>
+      <p><a id="qa-record-link">Onaylanan formu aç</a></p>
+      <p>QR’ın veya bağlantının kopyasına sahip olan herkes sağlık öykünüz dahil bu formdaki kişisel bilgileri görebilir. QR’ı yalnızca ilgili sağlık çalışanıyla paylaşın.</p>
+    </div>
+    <button class="secondary" id="qa-download">Formu PDF olarak indir</button>
+    <p id="qa-pdf-status" role="status" aria-live="polite"></p>
+    <button class="plain" id="qa-clear">Ekranı temizle</button>
+  </div>
+</section>
+
+<section id="test-health"></section><pre id="test-output"></pre></main><script>window.testErrors=[];window.addEventListener("error",event=>window.testErrors.push(event.message));window.onamFormSnapshot=[{"title":"1. İşlemin açıklaması","text":"Size önerilen işlem: Bilgisayarlı Tomografi (BT / Tomografi), Manyetik Rezonans Görüntüleme (MR) veya her ikisi.\n\nBT: X-ışınları kullanılarak vücudunuzun kesit halinde görüntülerini alır. Gerektiğinde damardan iyotlu kontrast madde verilebilir.\n\nMR: Güçlü manyetik alan ve radyo dalgaları ile detaylı görüntüler elde edilir. Gerektiğinde gadolinyumlu kontrast madde verilebilir.\n\nBu işlemler, doktorunuzun teşhis koyması veya tedavi planlaması için istenmiştir."},{"title":"2. Faydalar","text":"Hastalığınızın tanısını netleştirmek veya mevcut durumu takip etmek.\nAmeliyat / tedavi planlamasına yardımcı olmak.\nDiğer yöntemlere göre daha detaylı görüntü sağlayabilir."},{"title":"3. Riskler ve oluşabilecek yan etkiler","text":"Genel oranlar yaklaşık değerlerdir.\n\nBT için:\nRadyasyon maruziyeti (kanser riskini çok az arttırır, özellikle tekrarlayan çekimlerde).\nKontrast alerjisi (kaşıntı, döküntü, nadiren ağır reaksiyon %0,01–0,1).\nBöbrek fonksiyonlarında geçici bozulma (kontrast verilirse).\nGebelikte kullanılmaz (bebeğe zarar verebilir).\n\nMR için:\nManyetik alan nedeniyle metal implant, kalp pili, kulak içi cihaz, metal parça olan kişilerde yasaktır (hayati tehlike yaratabilir).\nKlostrofobi (kapalı alanda panik) – %5–10 oranında.\nKontrast alerjisi (çok nadir, %0,01).\nGürültü (kulak tıkacı verilir).\nHamilelikte ilk 3 ay önerilmez (doktor onayı şart).\n\nOrtak riskler:\nDamar yolu açılmasına bağlı morarma, enfeksiyon.\nÇok nadir anafilaktik şok (ölümcül olabilir, acil müdahale gerektirir)."},{"title":"4. Alternatif yöntemler","text":"Ultrason, röntgen, klasik tomografi, endoskopi, laboratuvar testleri veya hiç görüntüleme yapmama. Doktorunuz size en uygun olanı önerdi."},{"title":"5. Önemli uyarılar","text":"Hamilelik ihtimaliniz varsa mutlaka söyleyin.\nBöbrek yetmezliği, alerji öyküsü, astım, kalp pili, metal protez, dövme, piercing varsa lütfen belirtin.\nMR’da tüm metal eşyalarınızı (saat, kolye, kredi kartı vb.) çıkaracaksınız.\nKontrast verilecekse 4–6 saat aç kalmanız istenebilir."},{"title":"6. Onam beyanı","text":"Yukarıdaki tüm bilgileri okudum, anladım ve sorularım cevaplandı.\nİşlemin faydalarını ve risklerini kabul ediyorum.\nGerektiğinde kontrast madde verilmesini onaylıyorum.\nİstediğim zaman onamı geri çekebileceğimi biliyorum."}];window.onamAudio={stop(){window.dispatchEvent(new Event("onam-stop"))},speak(text,callback){window.audioDone=callback}};window.SpeechRecognition=class{start(){window.testMic=this;this.onstart?.()}abort(){this.onend?.()}};window.OnamRecords={configured:true,createKey:()=>"a".repeat(64),submit:async report=>{window.savedReport=report;return "00000000-0000-4000-8000-000000000001"},recordUrl:()=>"https://onam.test/record.html#key="+"a".repeat(64)};window.OnamQR={render(){}};</script><script src="../medical-history.js"></script><script src="../validation.js"></script><script src="../qa.js"></script><script src="health-history-browser-driver.js"></script></body></html>

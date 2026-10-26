@@ -2,7 +2,7 @@
  'use strict';
  const $=id=>document.getElementById('qa-'+id);
  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
- const V=window.OnamValidation;
+ const V=window.OnamValidation,H=window.OnamHealth;
  window.onamMicActive=()=>!!recognition||restartTimer!==null;
  const declaration='Onam formunu okudum, anladım, onaylıyorum';
  const questions=[
@@ -11,9 +11,10 @@
   {key:'birthDate',label:'Doğum tarihi',prompt:'Doğum tarihiniz nedir? Örneğin beş ekim iki bin beş. Duraksayabilirsiniz. Tarihin tamamını söyledikten sonra tamam deyin.',clean:V.birth,error:'Geçerli bir doğum tarihi girin. Örnek biçim: 15.06.1990. Gelecek tarih kabul edilmez.'},
   {key:'phone',label:'Telefon',prompt:'Telefon numaranız nedir? Rakamları tek tek söyleyin veya başında sıfırla yazın.',clean:V.phone,error:'Geçerli bir Türkiye telefon numarası girin. Başında sıfırla on bir rakam olmalıdır.'},
   {key:'dateTime',label:'Tarih ve saat',prompt:'Tarih ve saat cihazınızdan otomatik alınır. Kabul etmek için tamam deyin. Değiştirmek için tarihi, saat ve dakika diyerek zamanı söyleyin; bitince tamam deyin.',clean:V.dateTime,error:'Geçerli tarih ve saat girin. Örnek biçim: 24.10.2026 14:30.'},
+  ...H.definitions.flatMap((q,index)=>[{key:'history_'+q.id,label:q.label,prompt:q.prompt,medical:true,medicalNumber:index+1,clean:H.parseAnswer,error:'Lütfen evet veya hayır deyin. Bilmiyorsanız bilmiyorum diyebilirsiniz.'},...(q.follow?[{key:'detail_'+q.id,label:q.label+' açıklaması',prompt:q.follow+' Bilmiyorsanız bilmiyorum deyin. Açıklamanız bitince tamam deyin.',medicalDetail:true,parent:'history_'+q.id,medicalNumber:index+1,validate:H.detailError}]:[])]),
   {key:'declaration',label:'Son beyan',prompt:'Beyanınız için şunu söyleyin veya yazın: Okudum, anladım, onaylıyorum.',final:true}
  ];
- let editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
+ let dateReturnStep=0,editingDate=false,step=0,phase='idle',answers={},candidate='',recognition=null,generation=0,report=null,receiptKey=null,saveGeneration=0,confirmationText='',confirmationParts,questionSpeech='',spokenDeclaration='',pdfGeneration=0,pdfBusy=false;
  const normalize=v=>v.toLocaleLowerCase('tr-TR').normalize('NFC').replace(/[\p{P}]/gu,' ').replace(/\s+/g,' ').trim();
  const yes=v=>['evet','tamam','doğru','evet doğru','bilgilerim doğru'].includes(normalize(v));
  // Match only complete positive clauses; tolerate repetition, never ignore unknown/negative words.
@@ -44,9 +45,11 @@
   },parts);
  }
  function controls(){
-  const confirm=phase==='confirm';
+  const confirm=phase==='confirm',binary=!!questions[step]?.medical&&!confirm,typedBinary=binary&&(!Recognition||window.onamSilent||!$('auto').checked);
+  $('yes').hidden=$('no').hidden=!binary;$('answer').hidden=binary&&!typedBinary;document.getElementById('qa-answer-label').hidden=binary&&!typedBinary;
+  $('answer').maxLength=questions[step]?.medicalDetail?120:150;
   $('confirm').hidden=!confirm;$('correct').hidden=!confirm;
-  $('submit').hidden=confirm;$('answer').readOnly=confirm;
+  $('submit').hidden=confirm||(binary&&!typedBinary);$('answer').readOnly=confirm;
   $('confirm').textContent=questions[step]?.final?'Beyanımı tamamla':'Bilgilerim doğru';
   $('listen').disabled=!Recognition;
   $('listen').textContent=confirm?'Mikrofonla doğrula veya düzelt':'Mikrofonla cevap ver';
@@ -54,15 +57,17 @@
  function ask(){
   let autoDate=false;
   if(questions[step].key==='dateTime'&&!editingDate){answers.dateTime={value:V.dateTime(V.localNow()),confirmedAt:new Date().toISOString(),source:'device'};step++;autoDate=true}
+  while(questions[step]?.medicalDetail&&answers[questions[step].parent]?.value!=='Evet')step++;
   phase='answer';answerDraft='';candidate='';spokenDeclaration='';confirmationText='';confirmationParts=undefined;$('answer').value=questions[step].key==='dateTime'?V.dateTime(V.localNow()):'';
   const q=questions[step];
   $('date-info').hidden=!answers.dateTime||editingDate;
   $('date-value').textContent=answers.dateTime?.value||'';
   const answerLabel=document.getElementById('qa-answer-label');if(answerLabel)answerLabel.textContent=q.label+' — cevabınız';
-  questionSpeech=q.key==='dateTime'?'Tarih ve saat düzeltme. Yeni tarih ve saati söyleyip tamam deyin veya yazın. Mevcut değeri korumak için tamam diyebilirsiniz.':(autoDate?'Tarih ve saat otomatik kaydedildi. ':'')+q.prompt;
-  $('question').textContent=`${editingDate?'Tarih ve saat düzeltme':'Soru '+(step===5?5:step+1)+' / 5'}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
+  questionSpeech=q.key==='dateTime'?'Tarih ve saat düzeltme. Yeni tarih ve saati söyleyip tamam deyin veya yazın. Mevcut değeri korumak için tamam diyebilirsiniz.':(autoDate?'Tarih ve saat otomatik kaydedildi. ':'')+q.prompt+(q.medical?' Evet veya hayır diyebilirsiniz. Bilmiyorsanız bilmiyorum deyin.':'');
+  $('question').textContent=`${editingDate?'Tarih ve saat düzeltme':q.medical||q.medicalDetail?'Sağlık öyküsü '+q.medicalNumber+' / 10'+(q.medicalDetail?' · Açıklama':''):q.final?'Son beyan':'Hasta bilgileri '+(step+1)+' / 4'}: ${q.prompt}${q.key==='dateTime'?' Önerilen: '+$('answer').value:''}`;
   $('status').textContent=Recognition?'Soru bittikten sonra otomatik dinleme açıksa konuşabilirsiniz. Cevabınızı yazabilirsiniz.':'Bu tarayıcıda sesli cevap desteklenmiyor. Cevabınızı yazabilirsiniz.';
   $('answer').inputMode=['tc','phone'].includes(questions[step].key)?'tel':'text';
+  if(q.medical)$('status').textContent=Recognition&&!window.onamSilent&&$('auto').checked?'Evet veya Hayır düğmesini seçebilir ya da sesle yanıtlayabilirsiniz. Bilmiyorsanız bilmiyorum deyin.':'Evet veya Hayır düğmesini seçebilir ya da yanıtınızı yazabilirsiniz. Bilmiyorsanız bilmiyorum yazabilirsiniz.';
   controls();$('question').focus();say(questionSpeech);
  }
  function submit(value){
@@ -79,6 +84,7 @@
    }spokenDeclaration=value;value=declaration;
   }
   if(q.clean){const cleaned=q.clean(value);if(!cleaned){$('status').textContent=q.error;say(q.error);return}value=cleaned}
+  if(q.medicalDetail)value=value.replace(/\s+/g,' ').trim();
   if(q.validate&&q.validate(value)){$('status').textContent=q.validate(value);say($('status').textContent);return}
   candidate=value;$('answer').value=value;phase='confirm';
   if(acceptSuggested){confirm();return}
@@ -94,16 +100,20 @@
  function confirm(){
   if(phase!=='confirm')return;
   abortMic();answers[questions[step].key]={value:candidate,...(questions[step].final?{spokenDeclaration}:{}),confirmedAt:new Date().toISOString()};
-  editingDate=false;step++;if(step<questions.length)ask();else finish();
+  if(editingDate){editingDate=false;step=dateReturnStep;ask();return}
+  if(questions[step].medical&&candidate!=='Evet')delete answers['detail_'+questions[step].key.slice(8)];
+  step++;if(step<questions.length)ask();else finish();
  }
  function correct(){if(phase!=='confirm')return;abortMic();ask();$('answer').focus()}
  function finish(){
   phase='done';window.onamAudio.stop();$('work').hidden=true;$('result').hidden=false;
   receiptKey=window.OnamRecords.createKey();
-  report={type:'patient-declaration',submissionId:crypto.randomUUID(),formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers,formSnapshot:(window.onamFormSnapshot||[]).map(section=>({...section})),identityVerified:false,clinicalConsentRecorded:false};
-  const complete=questions.every(q=>answers[q.key]?.value);
+  const patientAnswers=Object.fromEntries(['name','tc','birthDate','phone','dateTime','declaration'].map(key=>[key,{...answers[key]}]));
+  patientAnswers.declaration.healthHistory=H.snapshot(answers);
+  report={type:'patient-declaration',submissionId:crypto.randomUUID(),formVersion:'bt-mr-photo-v1',completedAt:new Date().toISOString(),answers:patientAnswers,formSnapshot:(window.onamFormSnapshot||[]).map(section=>({...section})),identityVerified:false,clinicalConsentRecorded:false};
+  const complete=questions.every(q=>q.medicalDetail&&answers[q.parent]?.value!=='Evet'||answers[q.key]?.value);
   if(!complete)throw new Error('Zorunlu alan eksik');
-  $('summary').textContent=questions.map(q=>`${q.label}: ${answers[q.key].value}`).join('\n');
+  $('summary').textContent=questions.filter(q=>answers[q.key]?.value).map(q=>`${q.label}: ${answers[q.key].value}`).join('\n');
   $('download').focus();say('Son beyanınız alındı. İşlem tamamlandı. Geçmiş olsun. Sağlıklı günler dileriz.');saveReport();
  }
  async function saveReport(){
@@ -163,7 +173,8 @@
     if(!final)return;
     if(q.key==='dateTime'&&yes(pending)){acceptTranscript(pending);return}
     if(finished){if(!value){prefix='';resultOffset=results.length;answerDraft='';pending='';$('answer').value='';$('status').textContent='Cevap alınamadı. Önce cevabınızı söyleyin, sonra tamam deyin.';return}acceptTranscript(value);return}
-        if(q.final){
+    if(q.medical||(q.medicalDetail&&normalize(pending)==='bilmiyorum')){acceptTranscript(pending);return}
+    if(q.final){
      if(matchesDeclaration(value)||approvalOnly(value)||yes(value)||!declarationCanContinue(value))acceptTranscript(value);
      else $('status').textContent='Duyduğum: '+pending+'. Beyanın devamını söyleyebilirsiniz.';
      return;
@@ -210,10 +221,11 @@
  $('submit').onclick=()=>submit($('answer').value);
  $('answer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();submit($('answer').value)}};
  $('auto').disabled=!Recognition;
- $('auto').onchange=()=>{if(!$('auto').checked)abortMic()};
+ $('auto').onchange=()=>{if(!$('auto').checked)abortMic();if(['answer','confirm'].includes(phase))controls()};
  $('answer').oninput=()=>{answerDraft=$('answer').value.trim();abortMic()};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)abortMic()});
- $('date-edit').onclick=()=>{if(!['answer','confirm'].includes(phase)||!answers.dateTime)return;abortMic();editingDate=true;step=4;ask();$('answer').value=answers.dateTime.value};
+ $('date-edit').onclick=()=>{if(!['answer','confirm'].includes(phase)||!answers.dateTime)return;abortMic();dateReturnStep=step;editingDate=true;step=4;ask();$('answer').value=answers.dateTime.value};
+ $('yes').onclick=()=>submit('Evet');$('no').onclick=()=>submit('Hayır');
  $('confirm').onclick=confirm;$('correct').onclick=correct;$('listen').onclick=listen;
  $('repeat').onclick=()=>say(phase==='confirm'?confirmationText:questionSpeech,phase==='confirm'?confirmationParts:undefined);
  $('qr-download').onclick=()=>window.OnamQR.download($('qr')).catch(()=>{$('save-status').textContent='QR indirilemedi. Tekrar deneyin.'});

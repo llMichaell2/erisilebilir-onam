@@ -57,7 +57,7 @@ const root=path.resolve(__dirname,'..');
   await answer('31.02.1990');assert.equal(await p.locator('#qa-confirm').isVisible(),false);
   await accept('15 Haziran 1990');
   await answer('123');assert.equal(await p.locator('#qa-confirm').isVisible(),false);
-  await accept('0500 000 00 00');
+  await accept('0500 000 00 00');for(let i=0;i<10;i++){await p.locator('#qa-no').click();await p.locator('#qa-confirm').click()}
   assert.ok(await p.locator('#qa-date-value').textContent());
   await p.locator('#qa-date-edit').click();await answer('24.10.2026 25:12');assert.equal(await p.locator('#qa-confirm').isVisible(),false);
   await accept('24.10.2026 14:30');
@@ -104,6 +104,7 @@ const root=path.resolve(__dirname,'..');
   await voice('tamam');assert.equal(await slow.locator('#qa-answer').inputValue(),'05.10.2005');await approve();
   await voice('sıfır beş üç sekiz');assert.equal(await slow.locator('#qa-confirm').isVisible(),false);
   await voice('bir iki üç dört beş altı yedi');assert.equal(await slow.locator('#qa-answer').inputValue(),'05381234567');await approve();
+  for(let i=0;i<10;i++){await voice('hayır');await approve()}
   const suggested=await slow.locator('#qa-date-value').textContent();assert.match(suggested,/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/);assert.match(await slow.locator('#qa-question').textContent(),/Beyanınız/);
   await voice('Onaylıyorum Okudum anladım Onaylıyorum');assert.equal(await slow.locator('#qa-confirm').isVisible(),true);
   await finishPrompt();await voice('evet');assert.equal(await slow.locator('#qa-result').isVisible(),false);
